@@ -1,4 +1,4 @@
-package kwetter
+package rest
 
 import (
 	"github.com/gorilla/mux"
@@ -15,6 +15,7 @@ type Routes []Route
 
 func NewRouter(routes Routes) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
+	router.Use(SetCors)
 
 	for _, route := range routes {
 		router.
@@ -52,5 +53,5 @@ func InitRouter() {
 	}
 
 	router := NewRouter(routes)
-	http.ListenAndServe(":8080", router)
+	http.ListenAndServe(":40100", router)
 }

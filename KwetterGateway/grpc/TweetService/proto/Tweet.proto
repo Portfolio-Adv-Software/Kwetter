@@ -1,0 +1,31 @@
+syntax = "proto3";
+package proto;
+option go_package = "";
+
+import "google/protobuf/timestamp.proto";
+
+service TweetService {
+  rpc ReturnAll(ReturnAllReq) returns (stream ReturnAllRes);
+  rpc ReturnTweet(ReturnTweetReq) returns (ReturnTweetRes);
+  rpc postTweet(PostTweetReq) returns (PostTweetRes);
+}
+
+message Tweet{
+   string UserID = 1;
+   string Username = 2;
+   string TweetID = 3;
+   string Body = 4;
+   google.protobuf.Timestamp created = 5;
+}
+
+//return all tweets
+message ReturnAllReq{}
+message ReturnAllRes{ Tweet tweet = 1;}
+
+//return single tweet
+message ReturnTweetReq{string TweetID = 1;}
+message ReturnTweetRes{Tweet tweet = 1;}
+
+//create tweet
+message PostTweetReq{Tweet tweet = 1;}
+message PostTweetRes{Tweet tweet = 1;}

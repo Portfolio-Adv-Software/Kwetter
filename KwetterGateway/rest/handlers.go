@@ -1,4 +1,4 @@
-package kwetter
+package rest
 
 import "net/http"
 
