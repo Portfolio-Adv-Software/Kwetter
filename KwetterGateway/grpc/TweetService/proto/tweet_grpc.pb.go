@@ -19,9 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	TweetService_ReturnAll_FullMethodName   = "/proto.TweetService/ReturnAll"
-	TweetService_ReturnTweet_FullMethodName = "/proto.TweetService/ReturnTweet"
-	TweetService_PostTweet_FullMethodName   = "/proto.TweetService/postTweet"
+	TweetService_ReturnAll_FullMethodName   = "/pbtweet.TweetService/ReturnAll"
+	TweetService_ReturnTweet_FullMethodName = "/pbtweet.TweetService/ReturnTweet"
+	TweetService_PostTweet_FullMethodName   = "/pbtweet.TweetService/postTweet"
 )
 
 // TweetServiceClient is the client API for TweetService service.
@@ -188,7 +188,7 @@ func _TweetService_PostTweet_Handler(srv interface{}, ctx context.Context, dec f
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TweetService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.TweetService",
+	ServiceName: "pbtweet.TweetService",
 	HandlerType: (*TweetServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
