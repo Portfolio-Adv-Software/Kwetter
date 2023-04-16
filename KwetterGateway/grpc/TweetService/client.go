@@ -1,6 +1,8 @@
 package TweetService
 
 import (
+	"context"
+	"fmt"
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/grpc/TweetService/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -14,6 +16,15 @@ func InitClient() {
 		log.Fatalf("could not connect: %s", err)
 	}
 	defer conn.Close()
-	client := pbtweet.NewTweetServiceClient(conn)
+	c := pbtweet.NewTweetServiceClient(conn)
 
+}
+
+func ReturnAll(c pbtweet.TweetServiceClient) (response pbtweet.TweetService_ReturnAllClient) {
+	response, err := c.ReturnAll(context.Background(), &pbtweet.ReturnAllReq{})
+	if err != nil {
+		log.Fatalf("Failed to call ReturnAll: %v", err)
+	}
+	fmt.Print(response)
+	return response
 }
