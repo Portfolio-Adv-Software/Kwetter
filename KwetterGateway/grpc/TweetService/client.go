@@ -4,6 +4,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/grpc/TweetService/proto"
 )
 
 func InitClient() {
