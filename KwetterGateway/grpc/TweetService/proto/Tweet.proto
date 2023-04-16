@@ -1,5 +1,5 @@
 syntax = "proto3";
-package proto;
+package pbtweet;
 option go_package = ".";
 
 import "google/protobuf/timestamp.proto";

@@ -13,5 +13,5 @@ func InitClient() {
 		log.Fatalf("Failed to dial: %v", err)
 	}
 	defer conn.Close()
-	//client := pb.NewYourServiceClient(conn)
+	client := pbtweet.
 }
