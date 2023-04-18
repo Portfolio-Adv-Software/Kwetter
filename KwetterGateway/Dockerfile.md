@@ -1,21 +1,23 @@
-# Build stage
-FROM golang:1.20-alpine AS build
+FROM golang:1.20-alpine AS builder
 
-# Copy the go.mod and go.sum files from the root directory of your monorepo into the container
+RUN apk update && apk add --no-cache git
+
 WORKDIR /app
-COPY Kwetter/go.mod Kwetter/go.sum ./
 
-# Download dependencies
+COPY go.mod go.sum ./
+
 RUN go mod download
 
-# Copy the rest of the application files
 COPY . .
 
-# Build the Go app
-RUN go build -o /go/bin/app
+ARG TARGET_FILE=main.go
 
-# Runtime stage
-FROM alpine:latest
-WORKDIR /app
-COPY --from=build /go/bin/app .
-CMD ["./app"]
+RUN go build -o /kwetter-gateway ${TARGET_FILE}
+
+FROM scratch
+
+COPY --from=builder /kwetter-gateway /
+
+EXPOSE 8080
+
+CMD ["/kwetter-gateway"]
