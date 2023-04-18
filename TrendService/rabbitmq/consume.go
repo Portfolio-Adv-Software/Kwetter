@@ -1,6 +1,8 @@
 package rabbitmq
 
 import (
+	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"regexp"
 	"strings"
@@ -48,7 +50,14 @@ func ConsumeMessage(queue string) {
 
 	go func() {
 		for d := range msgs {
-			//do things
+			tweet := &pbtweet.Tweet{}
+			err := proto.Unmarshal(d.Body, tweet)
+			if err != nil {
+				log.Printf("failed to unmarshal tweet: %v", err)
+				continue
+			}
+			//check for hashtag
+			log.Printf("received tweet: %v", tweet)
 		}
 	}()
 
