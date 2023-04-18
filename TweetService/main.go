@@ -1,7 +1,18 @@
 package main
 
-import "github.com/Portfolio-Adv-Software/Kwetter/TweetService/tweetserver"
+import (
+	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/tweetserver"
+	"os"
+	"os/signal"
+	"syscall"
+)
 
 func main() {
-	tweetserver.InitGRPC()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	go tweetserver.InitGRPC()
+
+	<-stop
 }

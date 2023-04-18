@@ -16,7 +16,7 @@ func failOnError(err error, msg string) {
 }
 
 func ProduceMessage(name string, tweet *pb.Tweet) {
-	conn, err := amqp.Dial("amqps://ctltdklj:***@goose.rmq2.cloudamqp.com/ctltdklj ")
+	conn, err := amqp.Dial("amqps://ctltdklj:qV9vx5HIf7JyfDDA0fRto3Disk-T57CF@goose.rmq2.cloudamqp.com/ctltdklj")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -53,5 +53,5 @@ func ProduceMessage(name string, tweet *pb.Tweet) {
 		})
 	failOnError(err, "Failed to publish a message")
 
-	log.Printf(" [x] Sent #{body}\n", body)
+	log.Printf(" [x] Sent %v\n", body)
 }

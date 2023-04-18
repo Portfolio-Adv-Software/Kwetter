@@ -2,6 +2,7 @@ package rabbitmq
 
 import (
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
+	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"regexp"
@@ -58,7 +59,8 @@ func ConsumeMessage(queue string) {
 			}
 			tweet.Trends = extractHashtags(tweet.Body)
 			log.Printf("received tweet: %v", tweet)
-			//method to insert tweet into trenddb
+			c, _ := InitClient()
+			PostTrend(c, tweet)
 		}
 	}()
 

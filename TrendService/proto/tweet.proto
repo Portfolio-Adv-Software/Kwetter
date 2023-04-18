@@ -9,8 +9,8 @@ message Tweet{
   string Username = 2;
   string TweetID = 3;
   string Body = 4;
-  repeated string Trends = 5;
-  google.protobuf.Timestamp created = 6;
+  google.protobuf.Timestamp created = 5;
+  repeated string Trends = 6;
 }
 
 service TrendService{

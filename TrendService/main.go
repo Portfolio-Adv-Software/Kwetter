@@ -2,6 +2,7 @@ package main
 
 import (
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/rabbitmq"
+	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,6 +15,8 @@ func main() {
 
 	// start the goroutine to receive messages from the queue
 	go ConsumeMessage("tweet_queue")
+
+	go InitGRPC()
 
 	// wait for a signal to stop the application
 	<-stop
