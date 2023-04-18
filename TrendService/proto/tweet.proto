@@ -1,0 +1,13 @@
+syntax = "proto3";
+package proto;
+option go_package = ".";
+
+import "google/protobuf/timestamp.proto";
+
+message Tweet{
+  string UserID = 1;
+  string Username = 2;
+  string TweetID = 3;
+  string Body = 4;
+  google.protobuf.Timestamp created = 5;
+}

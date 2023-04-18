@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,13 +15,14 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"regexp"
 )
 
 type TweetServiceServer struct {
 	pbtweet.UnimplementedTweetServiceServer
 }
 
-func (t TweetServiceServer) ReturnAll(req *pbtweet.ReturnAllReq, s pbtweet.TweetService_ReturnAllServer) error {
+func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.TweetService_ReturnAllServer) error {
 	data := &pbtweet.Tweet{}
 	cursor, err := tweetdb.Find(context.Background(), bson.M{})
 	if err != nil {
@@ -48,14 +50,47 @@ func (t TweetServiceServer) ReturnAll(req *pbtweet.ReturnAllReq, s pbtweet.Tweet
 	return nil
 }
 
-func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
-	//TODO implement me
-	panic("implement me")
+func (t TweetServiceServer) ReturnTweet(_ context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
+	tweetID := req.TweetID
+	data := &pbtweet.Tweet{}
+	if err := tweetdb.FindOne(context.Background(), bson.M{"tweetid": tweetID}).Decode(data); err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
+	}
+	tweet := &pbtweet.Tweet{
+		UserID:   data.UserID,
+		Username: data.Username,
+		TweetID:  data.TweetID,
+		Body:     data.Body,
+		Created:  data.Created,
+	}
+	res := &pbtweet.ReturnTweetRes{Tweet: tweet}
+	return res, nil
 }
 
 func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTweetReq) (*pbtweet.PostTweetRes, error) {
-	//TODO implement me
-	panic("implement me")
+	data := req.GetTweet()
+
+	tweet := &pbtweet.Tweet{
+		UserID:   data.UserID,
+		Username: data.Username,
+		TweetID:  data.TweetID,
+		Body:     data.Body,
+		Created:  data.Created,
+	}
+
+	re := regexp.MustCompile(`#\w+`)
+	hashtags := re.FindAllString(tweet.Body, -1)
+
+	if len(hashtags) > 0 {
+		rabbitmq.ProduceMessage("tweet_queue", tweet)
+	}
+
+	_, err := tweetdb.InsertOne(ctx, tweet)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error inserting tweet into db: %v", err))
+	}
+	res := &pbtweet.PostTweetRes{Tweet: tweet}
+	return res, nil
 }
 
 var db *mongo.Client
@@ -125,8 +160,4 @@ func InitGRPC() {
 	fmt.Println("Closing MongoDB connection")
 	db.Disconnect(mongoCtx)
 	fmt.Println("Done.")
-}
-
-func InitDebugValues() {
-	
 }
