@@ -56,8 +56,9 @@ func ConsumeMessage(queue string) {
 				log.Printf("failed to unmarshal tweet: %v", err)
 				continue
 			}
-			//check for hashtag
+			tweet.Trends = extractHashtags(tweet.Body)
 			log.Printf("received tweet: %v", tweet)
+			//method to insert tweet into trenddb
 		}
 	}()
 

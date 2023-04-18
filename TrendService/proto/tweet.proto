@@ -12,3 +12,11 @@ message Tweet{
   repeated string Trends = 5;
   google.protobuf.Timestamp created = 6;
 }
+
+service TrendService{
+  rpc PostTrend(PostTrendReq) returns (PostTrendRes);
+}
+
+//posttrend
+message PostTrendReq{Tweet tweet = 1;}
+message PostTrendRes{Tweet tweet = 1;}
