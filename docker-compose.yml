@@ -1,30 +1,26 @@
-version: '3'
+version: '3.8'
+
 services:
-  kwetter-gateway:
+  gateway:
     build:
       context: ./KwetterGateway
       dockerfile: Dockerfile.md
     ports:
-      - "8080:8080"
-    volumes:
-      - ./KwetterGateway:/go/src/app
-      - ./go.mod:/go/src/app/go.mod
-      - ./go.sum:/go/src/app/go.sum
+      - "40100:40100"
+    depends_on:
+      - tweet-service
+      - trend-service
 
   tweet-service:
     build:
       context: ./TweetService
       dockerfile: Dockerfile.md
-    volumes:
-      - ./TweetService:/go/src/app
-      - ./go.mod:/go/src/app/go.mod
-      - ./go.sum:/go/src/app/go.sum
+    ports:
+      - "50051:50051"
 
   trend-service:
     build:
       context: ./TrendService
       dockerfile: Dockerfile.md
-    volumes:
-      - ./TrendService:/go/src/app
-      - ./go.mod:/go/src/app/go.mod
-      - ./go.sum:/go/src/app/go.sum
+    ports:
+      - "50052:50052"

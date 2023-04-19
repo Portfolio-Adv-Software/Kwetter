@@ -43,8 +43,8 @@ var db *mongo.Client
 var trenddb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUser = "KwetterMan"
-var mongoPwd = "zQWMJ0avUTTHHFG2"
+var mongoUser = "TrendService"
+var mongoPwd = "trend"
 var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
 
 func InitGRPC() {
@@ -60,7 +60,6 @@ func InitGRPC() {
 	var opts []grpc.ServerOption
 	// Create new gRPC server with (blank) options
 	s := grpc.NewServer(opts...)
-	// Create BlogService type
 	srv := &TrendServiceServer{}
 	// Register the service with the server
 	pbtrend.RegisterTrendServiceServer(s, srv)

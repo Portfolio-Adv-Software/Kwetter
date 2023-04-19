@@ -1,6 +1,6 @@
 FROM golang:1.20-alpine AS builder
 
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
@@ -12,12 +12,13 @@ COPY . .
 
 ARG TARGET_FILE=main.go
 
-RUN go build -o /kwetter-gateway ${TARGET_FILE}
+RUN go build -o /gateway ${TARGET_FILE}
 
 FROM scratch
 
-COPY --from=builder /kwetter-gateway /
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /gateway /
 
-EXPOSE 8080
+EXPOSE 40100
 
-CMD ["/kwetter-gateway"]
+CMD ["/gateway"]

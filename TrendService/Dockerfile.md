@@ -1,6 +1,6 @@
 FROM golang:1.20-alpine AS builder
 
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
@@ -16,6 +16,7 @@ RUN go build -o /trend-service ${TARGET_FILE}
 
 FROM scratch
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /trend-service /
 
 EXPOSE 50052

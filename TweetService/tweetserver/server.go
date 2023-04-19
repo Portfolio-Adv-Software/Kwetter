@@ -97,8 +97,8 @@ var db *mongo.Client
 var tweetdb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUser = "KwetterMan"
-var mongoPwd = "zQWMJ0avUTTHHFG2"
+var mongoUser = "TweetService"
+var mongoPwd = "tweet"
 var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
 
 func InitGRPC() {
@@ -114,7 +114,6 @@ func InitGRPC() {
 	var opts []grpc.ServerOption
 	// Create new gRPC server with (blank) options
 	s := grpc.NewServer(opts...)
-	// Create BlogService type
 	srv := &TweetServiceServer{}
 	// Register the service with the server
 	pbtweet.RegisterTweetServiceServer(s, srv)
