@@ -97,6 +97,10 @@ var db *mongo.Client
 var tweetdb *mongo.Collection
 var mongoCtx context.Context
 
+var mongoUser = "KwetterMan"
+var mongoPwd = "zQWMJ0avUTTHHFG2"
+var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
+
 func InitGRPC() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50051")
@@ -122,7 +126,8 @@ func InitGRPC() {
 	mongoCtx = context.Background()
 
 	// Connect takes in a context and options, the connection URI is the only option we pass for now
-	db, err = mongo.Connect(mongoCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	//local "mongodb://localhost:27017"
+	db, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dbconn))
 	// Handle potential errors
 	if err != nil {
 		log.Fatal(err)
