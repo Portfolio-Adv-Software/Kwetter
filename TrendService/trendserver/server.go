@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"log"
 	"net"
@@ -27,7 +28,7 @@ func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTren
 		Username: data.Username,
 		TweetID:  data.TweetID,
 		Body:     data.Body,
-		Trends:   data.Trends,
+		Trend:    data.Trend,
 		Created:  data.Created,
 	}
 
@@ -63,6 +64,7 @@ func InitGRPC() {
 	srv := &TrendServiceServer{}
 	// Register the service with the server
 	pbtrend.RegisterTrendServiceServer(s, srv)
+	reflection.Register(s)
 
 	// Initialize MongoDb client
 	fmt.Println("Connecting to MongoDB...")

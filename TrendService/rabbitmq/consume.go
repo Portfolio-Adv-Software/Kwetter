@@ -57,7 +57,7 @@ func ConsumeMessage(queue string) {
 				log.Printf("failed to unmarshal tweet: %v", err)
 				continue
 			}
-			tweet.Trends = extractHashtags(tweet.Body)
+			tweet.Trend = extractHashtags(tweet.Body)
 			log.Printf("received tweet: %v", tweet)
 			c, _ := InitClient()
 			PostTrend(c, tweet)
