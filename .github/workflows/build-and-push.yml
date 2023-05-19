@@ -25,13 +25,13 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
-      - name: Build and Deploy tweet service
+      - name: Build
         run: |
           cd TweetService
           docker build -t kwetter/tweet-service -f Dockerfile.md .
           
       - name: Deploy tweet service
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
