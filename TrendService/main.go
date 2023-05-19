@@ -1,23 +1,23 @@
 package main
 
 import (
+	"fmt"
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/rabbitmq"
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
-	"os"
-	"os/signal"
-	"syscall"
+	"github.com/joho/godotenv"
+	"log"
 )
 
 func main() {
-	// create a channel to receive signals to stop the application
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
-	// start the goroutine to receive messages from the queue
+	loadEnv()
 	go ConsumeMessage("tweet_queue")
-
 	go InitGRPC()
+}
 
-	// wait for a signal to stop the application
-	<-stop
+func loadEnv() {
+	fmt.Println("loading env")
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 }

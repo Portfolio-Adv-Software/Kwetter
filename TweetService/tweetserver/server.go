@@ -54,7 +54,7 @@ func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.TweetSe
 func (t TweetServiceServer) ReturnTweet(_ context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
 	tweetID := req.TweetID
 	data := &pbtweet.Tweet{}
-	err := tweetdb.FindOne(context.Background(), bson.M{"tweetid": tweetID}).Decode(data);
+	err := tweetdb.FindOne(context.Background(), bson.M{"tweetid": tweetID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
 	}
@@ -99,54 +99,40 @@ var db *mongo.Client
 var tweetdb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUser = "TweetService"
-var mongoPwd = "tweet"
-var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
-
 func InitGRPC() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50051")
+
+	var mongoUser = os.Getenv("MONGO_USERNAME")
+	var mongoPwd = os.Getenv("MONGO_PASSWORD")
+	var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
 
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("Unable to listen on port :50051: %v", err)
 	}
 
-	// Set options, here we can configure things like TLS support
 	var opts []grpc.ServerOption
-	// Create new gRPC server with (blank) options
 	s := grpc.NewServer(opts...)
 	srv := &TweetServiceServer{}
-	// Register the service with the server
 	pbtweet.RegisterTweetServiceServer(s, srv)
 	reflection.Register(s)
 
-	// Initialize MongoDb client
 	fmt.Println("Connecting to MongoDB...")
-
-	// non-nil empty context
 	mongoCtx = context.Background()
-
-	// Connect takes in a context and options, the connection URI is the only option we pass for now
-	//local "mongodb://localhost:27017"
 	db, err = mongo.Connect(mongoCtx, options.Client().ApplyURI(dbconn))
-	// Handle potential errors
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Check whether the connection was succesful by pinging the MongoDB server
 	err = db.Ping(mongoCtx, nil)
 	if err != nil {
 		log.Fatalf("Could not connect to MongoDB: %v\n", err)
 	} else {
 		fmt.Println("Connected to Mongodb")
 	}
-
-	// Bind our collection to our global variable for use in other methods
 	tweetdb = db.Database("TweetTest").Collection("KwetterTweets")
 
-	// Start the server in a child routine
 	go func() {
 		if err := s.Serve(listener); err != nil {
 			log.Fatalf("Failed to serve: %v", err)

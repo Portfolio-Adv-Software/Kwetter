@@ -5,6 +5,7 @@ services:
     build:
       context: ./KwetterGateway
       dockerfile: Dockerfile.md
+    image: gateway:latest
     ports:
       - "40100:40100"
     depends_on:
@@ -15,6 +16,7 @@ services:
     build:
       context: ./TweetService
       dockerfile: Dockerfile.md
+    image: tweet-service:latest
     ports:
       - "50051:50051"
 
@@ -22,5 +24,6 @@ services:
     build:
       context: ./TrendService
       dockerfile: Dockerfile.md
+    image: trend-service:latest
     ports:
       - "50052:50052"

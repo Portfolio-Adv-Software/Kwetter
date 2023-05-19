@@ -104,22 +104,17 @@ func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUse
 	panic("implement me")
 }
 
-func (u UserServiceServer) mustEmbedUnimplementedUserServiceServer() {
-	//TODO implement me
-	panic("implement me")
-}
-
 var db *mongo.Client
 var accountdb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUser = os.Getenv("MONGO_USERNAME")
-var mongoPwd = os.Getenv("MONGO_PASSWORD")
-var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
-
 func InitGRPC() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50054")
+
+	var mongoUser = os.Getenv("MONGO_USERNAME")
+	var mongoPwd = os.Getenv("MONGO_PASSWORD")
+	var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
 
 	listener, err := net.Listen("tcp", ":50054")
 	if err != nil {

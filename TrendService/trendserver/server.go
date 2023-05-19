@@ -44,13 +44,13 @@ var db *mongo.Client
 var trenddb *mongo.Collection
 var mongoCtx context.Context
 
-var mongoUser = "TrendService"
-var mongoPwd = "trend"
-var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
-
 func InitGRPC() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50052")
+
+	var mongoUser = os.Getenv("MONGO_USERNAME")
+	var mongoPwd = os.Getenv("MONGO_PASSWORD")
+	var dbconn = "mongodb+srv://" + mongoUser + ":" + mongoPwd + "@kwetter.vduy1tl.mongodb.net/test"
 
 	listener, err := net.Listen("tcp", ":50052")
 	if err != nil {
