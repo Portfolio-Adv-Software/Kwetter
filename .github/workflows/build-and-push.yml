@@ -56,7 +56,7 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
   build-and-deploy:
-      name: Build and Deploy
+      name: Build and Deploy to Hub
       runs-on: ubuntu-latest
       steps:
         - name: Checkout code
