@@ -1,0 +1,86 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  account-service-secrets:
+    environment: AccountService
+    name: AccountService Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with: 
+          go-version: 1.20
+          
+      - name: Load AccountService Secrets
+        env: |
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          
+  trend-service-secrets:
+    environment: TrendService
+    name: TrendService Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with: 
+          go-version: 1.20
+      
+      - name: Load TrendService Secrets
+        env: |
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+        
+  tweet-service-secrets:
+    environment: TweetService
+    name: TweetService Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with: 
+          go-version: 1.20
+          
+      - name: Load AccountService Secrets
+        env: |
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
+  build-and-deploy:
+      name: Build and Deploy
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+        
+        - name: Build Services
+          run: docker-compose build
+      
+        - name: Login to Docker Hub
+          uses: docker/login-action@v1
+          with:
+            username: ${{ secrets.DOCKER_USERNAME }}
+            password: ${{ secrets.DOCKER_PASSWORD }}
+        
+        - name: build and deploy services
+          run:
+            docker-compose push
+            docker-compose up -d
