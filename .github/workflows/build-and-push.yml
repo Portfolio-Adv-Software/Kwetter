@@ -28,7 +28,7 @@ jobs:
           cd AccountService
           docker build -t account-service:latest -f Dockerfile.md .
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
-          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          docker push account-service:latest
           
   trend-service:
     environment: TrendService
@@ -51,7 +51,7 @@ jobs:
           cd TrendService
           docker build -t trend-service:latest -f Dockerfile.md .
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
-          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          docker push trend-service:latest
         
   tweet-service:
     environment: TweetService
@@ -74,4 +74,4 @@ jobs:
           cd TweetService
           docker build -t tweet-service:latest -f Dockerfile.md .
           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
-          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          docker push tweet-service:latest
