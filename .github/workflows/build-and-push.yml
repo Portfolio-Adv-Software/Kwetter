@@ -23,6 +23,12 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
+      - name: Build and Deploy tweet service
+        run: |
+          docker-compose build
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          
   trend-service-secrets:
     environment: TrendService
     name: TrendService Secrets
@@ -38,8 +44,14 @@ jobs:
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          
+      - name: Build and Deploy tweet service
+        run: |
+          docker-compose build
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
         
-  tweet-service-secrets:
+  build-tweet-service:
     environment: TweetService
     name: TweetService Secrets
     runs-on: ubuntu-latest
@@ -55,19 +67,8 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
-  build-and-deploy:
-      name: Build and Deploy to Hub
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v3
-          
-        - name: Set up Docker Compose
-          run: |
-            sudo apt-get install -y docker-compose
-            
-        - name: Build and Deploy Services
-          run: |
-            docker-compose build
-            echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-            docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+      - name: Build and Deploy tweet service
+        run: |
+          docker-compose build
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
