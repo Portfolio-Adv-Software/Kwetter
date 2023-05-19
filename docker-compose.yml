@@ -5,7 +5,7 @@ services:
     build:
       context: ./KwetterGateway
       dockerfile: Dockerfile.md
-    image: kwetter:gateway-latest
+    image: kwetter/gateway:latest
     ports:
       - "40100:40100"
     depends_on:
@@ -16,7 +16,7 @@ services:
     build:
       context: ./TweetService
       dockerfile: Dockerfile.md
-    image: kwetter:tweetservice-latest
+    image: kwetter/tweet-service:latest
     ports:
       - "50051:50051"
 
@@ -24,6 +24,6 @@ services:
     build:
       context: ./TrendService
       dockerfile: Dockerfile.md
-    image: kwetter:trendservice-latest
+    image: kwetter/trend-service:latest
     ports:
       - "50052:50052"
