@@ -26,9 +26,9 @@ jobs:
       - name: Build and Deploy Account service
         run: |
           cd AccountService
-          docker build -t kwetter//account-service:latest -f Dockerfile.md .
+          docker build -t kwetter:account-service -f Dockerfile.md .
           echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push kwetter/account-service:latest
+          docker push kwetter:account-service
           
   trend-service:
     environment: TrendService
@@ -49,9 +49,9 @@ jobs:
       - name: Build and Deploy Trend service
         run: |
           cd TrendService
-          docker build -t kwetter/trend-service:latest -f Dockerfile.md .
+          docker build -t kwetter:trend-service -f Dockerfile.md .
           echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push kwetter/trend-service:latest
+          docker push kwetter:trend-service
         
   tweet-service:
     environment: TweetService
@@ -72,6 +72,6 @@ jobs:
       - name: Build and Deploy tweet service
         run: |
           cd TweetService
-          docker build -t kwetter/tweet-service:latest -f Dockerfile.md .
+          docker build -t kwetter:tweet-service -f Dockerfile.md .
           echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker push kwetter/tweet-service:latest
+          docker push kwetter:tweet-service
