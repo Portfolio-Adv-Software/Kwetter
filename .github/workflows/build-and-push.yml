@@ -24,8 +24,7 @@ jobs:
           go-version: 1.20
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-      - run: |
-          echo "MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}" >> $GITHUB_ENV
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
   trend-service-secrets:
     environment: TrendService
@@ -65,17 +64,18 @@ jobs:
       steps:
         - name: Checkout code
           uses: actions/checkout@v3
-        
-        - name: Build Services
-          run: docker-compose build
-      
-        - name: Login to Docker Hub
-          uses: docker/login-action@v1
+          
+        - name: build services
+          run:
+            docker-compose build            
+
+        - name: Deploy to Docker Hub
+          uses: docker/build-push-action@v1
           with:
             username: ${{ secrets.DOCKER_USERNAME }}
             password: ${{ secrets.DOCKER_PASSWORD }}
+            repository: ${{ secrets.DOCKER_USERNAME }}/Kwetter
+            tags: latest
         
-        - name: build and deploy services
-          run:
-            docker-compose push Kwetter
-            docker-compose up -d
+
+          
