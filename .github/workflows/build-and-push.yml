@@ -24,7 +24,8 @@ jobs:
           go-version: 1.20
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+      - run: |
+          echo "MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}" >> $GITHUB_ENV
           
   trend-service-secrets:
     environment: TrendService
