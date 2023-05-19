@@ -7,9 +7,9 @@ on:
     branches: [ "main" ]
 
 jobs:
-  account-service-secrets:
+  account-service:
     environment: AccountService
-    name: AccountService Secrets
+    name: Build AccountService
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -23,15 +23,16 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
-      - name: Build and Deploy tweet service
+      - name: Build and Deploy Account service
         run: |
-          docker-compose build
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          cd AccountService
+          docker build -t kwetter/account-service:latest
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
+          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
           
-  trend-service-secrets:
+  trend-service:
     environment: TrendService
-    name: TrendService Secrets
+    name: Build TrendService
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -45,15 +46,16 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
-      - name: Build and Deploy tweet service
+      - name: Build and Deploy Trend service
         run: |
-          docker-compose build
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          cd TrendService
+          docker build -t kwetter/trend-service:latest
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
+          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
         
-  build-tweet-service:
+  tweet-service:
     environment: TweetService
-    name: TweetService Secrets
+    name: Build TweetService
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -69,6 +71,7 @@ jobs:
           
       - name: Build and Deploy tweet service
         run: |
-          docker-compose build
-          echo ${{ secrets.DOCKER_TOKEN }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
-          docker-compose push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
+          cd TweetService
+          docker build -t kwetter/tweet-service:latest
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_TOKEN }}
+          docker push --push-option=--username=${{ secrets.DOCKER_USERNAME }}
