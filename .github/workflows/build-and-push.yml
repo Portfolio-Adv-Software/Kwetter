@@ -41,5 +41,3 @@ jobs:
           file: TweetService/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
-          username: ${{ secrets.DOCKER_USERSNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
