@@ -18,9 +18,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-          
       - name: Set up Go env
         uses: actions/setup-go@v3
         with: 
@@ -28,6 +25,10 @@ jobs:
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          
+      - name: Build Tweet Service
+        working-directory: TweetService
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service .
         
       - name: Set Docker Credentials
         run: |
@@ -37,7 +38,10 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
       
-      - name: Build and Push Docker Image
-        run: |
-          docker buildx create --use
-          docker buildx build --platform linux/amd64 -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweetservice-${{ github.sha }} -f TweetService/Dockerfile --push .
+      - name: Push to Docker Hub
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: TweetService/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
