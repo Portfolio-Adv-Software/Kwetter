@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.21.12
-// source: tweet.proto
+// source: gateway.proto
 
 package __
 
@@ -207,5 +207,5 @@ var TweetService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "tweet.proto",
+	Metadata: "gateway.proto",
 }

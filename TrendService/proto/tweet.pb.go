@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.28.1
 // 	protoc        v4.23.0
-// source: tweet.proto
+// source: gateway.proto
 
 package __
 
