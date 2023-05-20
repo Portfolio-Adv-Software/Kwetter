@@ -7,64 +7,6 @@ on:
     branches: [ "main" ]
 
 jobs:
-  account-service:
-    environment: AccountService
-    name: Build AccountService
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Set up Go and secrets
-        uses: actions/setup-go@v3
-        with: 
-          go-version: 1.20
-        env:
-          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-      
-      - name: Build Account Service
-        run: |
-          cd AccountService
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service .
-          
-  trend-service:
-    environment: TrendService
-    name: Build TrendService
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Set up Go and secrets
-        uses: actions/setup-go@v3
-        with: 
-          go-version: 1.20
-        env:
-          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-          
-      - name: Build Trend Service
-        run: |
-          cd TrendService
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter/trend-service -f Dockerfile .
-          
-      - name: Set Docker Credentials
-        run: |
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
-          echo "DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}" >> $GITHUB_ENV
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
-      
-      - name: Push to Docker Hub
-        uses: docker/build-push-action@v2
-        with:
-          context: ./TrendService
-          file: Dockerfile
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service
-        
   tweet-service:
     environment: TweetService
     name: Build TweetService
@@ -82,17 +24,8 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
       - name: Build Tweet Service
-        run: |
-          cd TweetService
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter/tweet-service .
-          
-      - name: Set Docker Credentials
-        run: |
-          echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_ENV
-          echo "DOCKER_TOKEN=${{ secrets.DOCKER_TOKEN }}" >> $GITHUB_ENV
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
+        working-directory: ./TweetService
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service .
       
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
@@ -101,4 +34,6 @@ jobs:
           file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
           
