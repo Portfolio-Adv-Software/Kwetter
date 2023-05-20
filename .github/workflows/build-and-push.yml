@@ -38,8 +38,7 @@ jobs:
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          context: TweetService
-          file: Dockerfile
+          context: .
+          file: TweetService/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
-          
