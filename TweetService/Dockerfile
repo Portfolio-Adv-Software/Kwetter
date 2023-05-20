@@ -18,7 +18,6 @@ RUN go build -o /tweet-service ${TARGET_FILE}
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app/go.mod /app/go.sum /app/
 COPY --from=builder /tweet-service /
 
 EXPOSE 50051
