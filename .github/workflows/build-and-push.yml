@@ -42,3 +42,9 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
           
+      - name: Debug
+        run: |
+          ls -R
+          find .
+          echo "Current Directory: $(pwd)"
+          echo "Dockerfile Path: $(realpath tweetservice/Dockerfile)"
