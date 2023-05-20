@@ -21,4 +21,4 @@ COPY --from=builder /tweet-service /
 
 EXPOSE 50051
 
-ENTRYPOINT ["/tweet-service"]
+CMD ["/tweet-service"]
