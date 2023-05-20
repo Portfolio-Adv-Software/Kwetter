@@ -24,7 +24,7 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           
       - name: Build Tweet Service
-        working-directory: ./TweetService
+        working-directory: ./tweetService
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service .
         
       - name: Set Docker Credentials
@@ -38,7 +38,7 @@ jobs:
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          context: ./TweetService
+          context: ./tweetService
           file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
