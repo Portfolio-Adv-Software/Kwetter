@@ -8,6 +8,8 @@ on:
     
 env:
   ACTIONS_STEP_DEBUG: true
+  DOCKER_USERNAME:  ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_TOKEN: ${{ secrets.DOCKER_TOKEN }}
 
 jobs:
   tweet-service:
@@ -37,5 +39,3 @@ jobs:
           file: TweetService/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
