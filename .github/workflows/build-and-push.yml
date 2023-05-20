@@ -47,7 +47,7 @@ jobs:
       - name: Build Trend Service
         run: |
           cd TrendService
-          docker build -t kwetter/trend-service -f Dockerfile .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter/trend-service -f Dockerfile .
           
       - name: Set Docker Credentials
         run: |
@@ -84,7 +84,7 @@ jobs:
       - name: Build Tweet Service
         run: |
           cd TweetService
-          docker build -t kwetter/tweet-service .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter/tweet-service .
           
       - name: Set Docker Credentials
         run: |
