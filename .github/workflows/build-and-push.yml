@@ -60,7 +60,7 @@ jobs:
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
-          context: ./TrendServer
+          context: ./TrendService
           file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service
@@ -84,7 +84,7 @@ jobs:
       - name: Build Tweet Service
         run: |
           cd TweetService
-          docker build -t kwetter/tweet-service
+          docker build -t kwetter/tweet-service .
           
       - name: Set Docker Credentials
         run: |
