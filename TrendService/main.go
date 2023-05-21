@@ -6,18 +6,29 @@ import (
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
 	"github.com/joho/godotenv"
 	"log"
+	"sync"
 )
 
-func main() {
-	loadEnv()
-	go ConsumeMessage("tweet_queue")
-	go InitGRPC()
-}
+var wg sync.WaitGroup
 
-func loadEnv() {
+func init() {
 	fmt.Println("loading env")
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+}
+
+func main() {
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		ConsumeMessage("tweet_queue")
+	}()
+
+	go func() {
+		defer wg.Done()
+		InitGRPC()
+	}()
+	wg.Wait()
 }
