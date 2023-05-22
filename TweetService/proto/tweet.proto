@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 service TweetService {
   rpc ReturnAll(ReturnAllReq) returns (stream ReturnAllRes);
   rpc ReturnTweet(ReturnTweetReq) returns (ReturnTweetRes);
-  rpc postTweet(PostTweetReq) returns (PostTweetRes);
+  rpc PostTweet(PostTweetReq) returns (PostTweetRes);
 }
 
 message Tweet{
