@@ -58,7 +58,7 @@ message RegisterRes{}
 
 //Login
 message LoginReq{string email = 1; string password = 2;}
-message LoginRes{string status = 1; string access_token = 2; string refresh_token = 3;}
+message LoginRes{string status = 1; string access_token = 2;}
 
 //Validate
 message ValidateReq{}
