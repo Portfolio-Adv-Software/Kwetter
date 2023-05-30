@@ -9,9 +9,8 @@ service AuthService{
 
 //Register
 message RegisterReq{
-  string name = 1;
-  string email = 2;
-  string password = 3;
+  string email = 1;
+  string password = 2;
 }
 message RegisterRes{string status = 1;}
 
