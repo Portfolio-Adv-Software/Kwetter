@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	. "github.com/Portfolio-Adv-Software/Kwetter/AuthService/authserver"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -9,6 +10,7 @@ import (
 // port 50053
 func main() {
 	loadEnv()
+	InitGRPC()
 }
 
 func loadEnv() {

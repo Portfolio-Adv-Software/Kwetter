@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// port 50051
 func main() {
 	loadEnv()
 	InitGRPC()

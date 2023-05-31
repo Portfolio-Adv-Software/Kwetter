@@ -51,10 +51,10 @@ func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.TweetSe
 	return nil
 }
 
-func (t TweetServiceServer) ReturnTweet(_ context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
+func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
 	tweetID := req.TweetID
 	data := &pbtweet.Tweet{}
-	err := tweetdb.FindOne(context.Background(), bson.M{"tweetid": tweetID}).Decode(data)
+	err := tweetdb.FindOne(ctx, bson.M{"tweetid": tweetID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
 	}

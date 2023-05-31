@@ -3,6 +3,7 @@ module github.com/Portfolio-Adv-Software/Kwetter/AuthService
 go 1.20
 
 require (
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.11.6
 	golang.org/x/net v0.10.0

@@ -14,6 +14,7 @@ func main() {
 	go InitGRPC()
 }
 
+// port 50052
 func loadEnv() {
 	fmt.Println("loading env")
 	err := godotenv.Load(".env")
