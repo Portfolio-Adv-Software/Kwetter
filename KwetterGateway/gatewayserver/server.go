@@ -1,7 +1,6 @@
 package gatewayserver
 
 import (
-	"bytes"
 	"fmt"
 	pb "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -9,7 +8,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
-	"io"
 	"log"
 	"net"
 	"net/http"
@@ -106,7 +104,6 @@ func InitGRPC(wg *sync.WaitGroup, config *ServiceConfig) {
 		}
 	}()
 	fmt.Println("Server succesfully started on port :50055")
-
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
 
@@ -125,28 +122,28 @@ func InitMux(wg *sync.WaitGroup, config *ServiceConfig) {
 	ctx := context.Background()
 	mux := runtime.NewServeMux()
 	registerEndpoints(ctx, mux, config)
-	handler := loggingMiddleware(mux)
-	err := http.ListenAndServe(":8080", handler)
+	//handler := loggingMiddleware(mux)
+	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatalf("failed to start gateway server: %v", err)
 	}
 }
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			log.Printf("Failed to read request body: %v", err)
-		} else {
-			// Log the request body
-			log.Printf("Request body: %s", string(body))
-		}
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-		next.ServeHTTP(w, r)
-		log.Printf("Sent response: %d", w.(http.ResponseWriter))
-	})
-}
+//func loggingMiddleware(next http.Handler) http.Handler {
+//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
+//		body, err := io.ReadAll(r.Body)
+//		if err != nil {
+//			log.Printf("Failed to read request body: %v", err)
+//		} else {
+//			// Log the request body
+//			log.Printf("Request body: %s", string(body))
+//		}
+//		r.Body = io.NopCloser(bytes.NewBuffer(body))
+//		next.ServeHTTP(w, r)
+//		log.Printf("Sent response: %d", w.(http.ResponseWriter))
+//	})
+//}
 
 func registerEndpoints(ctx context.Context, mux *runtime.ServeMux, config *ServiceConfig) {
 	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, config.AuthServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})

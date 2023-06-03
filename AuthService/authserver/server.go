@@ -26,8 +26,6 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
-	log.Println("received email: " + req.GetEmail())
-	log.Println("received password: " + req.GetPassword())
 	data := req.GetEmail()
 	user := &pbauth.User{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
