@@ -3,6 +3,7 @@ package authserver
 import (
 	"fmt"
 	pbauth "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
 	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,16 +25,13 @@ type AuthServiceServer struct {
 	pbauth.UnimplementedAuthServiceServer
 }
 
-type User struct {
-	Email    string `bson:"email"`
-	Password string `bson:"password"`
-}
-
 func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
+	log.Println("received email: " + req.GetEmail())
+	log.Println("received password: " + req.GetPassword())
 	data := req.GetEmail()
-	user := &User{}
+	user := &pbauth.User{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
-	if err != nil {
+	if err == nil {
 		return &pbauth.RegisterRes{Status: "Email is already registered"}, nil
 	}
 
@@ -46,15 +44,21 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to register user: %v", err))
 	}
+
+	registeredUser := &pbauth.User{}
+	err = authdb.FindOne(ctx, bson.M{"email": newUser.GetEmail()}).Decode(registeredUser)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to retrieve registered user for queue: %v", err))
+	}
+	rabbitmq.ProduceMessage("user_queue", registeredUser)
 	return &pbauth.RegisterRes{
 		Status: "Registration successful",
 	}, nil
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pbauth.LoginRes, error) {
-	email := req.Email
-	user := &User{}
-	err := authdb.FindOne(ctx, bson.M{"email": email}).Decode(user)
+	user := &pbauth.User{}
+	err := authdb.FindOne(ctx, bson.M{"email": req.Email}).Decode(user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
 	}
@@ -62,7 +66,7 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pb
 	if !verifyPassword(req.GetPassword(), user.Password) {
 		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
 	}
-	token, _ := generateJWTToken(user.Email)
+	token, _ := generateJWTToken(user)
 	return &pbauth.LoginRes{
 		Token:  token,
 		Status: "Login succesful",
@@ -90,15 +94,34 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq
 		return &pbauth.ValidateRes{Status: "INVALID"}, nil
 	}
 
+	user := &pbauth.User{}
+	emailClaim := token.Claims.(jwt.MapClaims)
+	email := emailClaim["email"].(string)
+	err = authdb.FindOne(ctx, bson.M{"email": email}).Decode(user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %v", err)
+	}
+
 	// Token is valid
 	return &pbauth.ValidateRes{Status: "VALID"}, nil
 }
 
 var secretKey = os.Getenv("SECRET_KEY")
 
-func generateJWTToken(email string) (string, error) {
+// enum for roles
+type Role int
+
+const (
+	user Role = iota
+	moderator
+	admin
+)
+
+func generateJWTToken(user *pbauth.User) (string, error) {
 	claims := jwt.MapClaims{
-		"email":   email,
+		"id":      user.GetId(),
+		"email":   user.GetEmail(),
+		"role":    user,
 		"expires": time.Now().Add(time.Hour * 24).Unix(),
 	}
 

@@ -2,103 +2,124 @@ syntax = "proto3";
 option go_package = ".";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto/auth.proto";
+
 
 service AuthService{
   rpc Register(RegisterReq) returns(RegisterRes){
-    option (google.api.http) = { post: "/auth/register" body: "*" };
+    option (google.api.http) = {post: "/auth/register" body: "*"};
   }
   rpc Login(LoginReq) returns(LoginRes){
-    option (google.api.http) = { post: "/auth/login"};
+    option (google.api.http) = {post: "/auth/login"};
   }
   rpc Validate(ValidateReq) returns(ValidateRes){
-    option (google.api.http) = { get: "/auth/validate"};
+    option (google.api.http) = {get: "/auth/validate"};
   }
 }
 
-service AccountService{
-  rpc CreateUser(CreateUserReq) returns(CreateUserRes){
-    option (google.api.http) = { post: "/account/create" body: "*"};
-  }
+service UserService{
   rpc GetUser(GetUserReq) returns(GetUserRes){
-    option (google.api.http) = { get: "/account/{account_id}"};
+    option (google.api.http) = {get: "/account/{UserID}"};
   }
   rpc GetAllUsers(GetAllUsersReq) returns(GetAllUsersRes){
-    option (google.api.http) = { get: "/account/all" };
+    option (google.api.http) = {get: "/account/all"};
   }
   rpc UpdateUser(UpdateUserReq) returns(UpdateUserRes){
-    option (google.api.http) = { patch: "/account/{account_id}" body: "*"};
+    option (google.api.http) = {patch: "/account/{user.UserID}" body: "*"};
   }
   rpc DeleteUser(DeleteUserReq) returns(UpdateUserRes){
-    option (google.api.http) = { delete: "/account/{account_id}"};
+    option (google.api.http) = {delete: "/account/{UserID}"};
   }
 }
 
 service TrendService{
   rpc GetTrend(GetTrendReq) returns(GetTrendRes){
-    option (google.api.http) = { get: "/trend/{trend}"};
+    option (google.api.http) = {get: "/trend/{Trend}"};
   }
 }
 
 service TweetService{
   rpc ReturnAll(ReturnAllReq) returns(ReturnAllRes){
-    option (google.api.http) = { get: "/tweet/all"};
+    option (google.api.http) = {get: "/tweet/all"};
   }
   rpc ReturnTweet(ReturnTweetReq) returns(ReturnTweetRes){
-    option (google.api.http) = { get: "/tweet/{tweet_id}"};
+    option (google.api.http) = {get: "/tweet/{TweetID}"};
   }
   rpc PostTweet(PostTweetReq) returns(PostTweetRes){
-    option (google.api.http) = { post: "/tweet" body: "*"};
+    option (google.api.http) = {post: "/tweet" body: "*"};
   }
 }
 
 //AuthService
 //Register
-message RegisterReq{}
-message RegisterRes{}
+message RegisterReq{string email = 1; string password = 2;}
+message RegisterRes{string status = 1;}
 
 //Login
 message LoginReq{string email = 1; string password = 2;}
 message LoginRes{string status = 1; string access_token = 2;}
 
 //Validate
-message ValidateReq{}
-message ValidateRes{}
+message ValidateReq{string token = 1;}
+message ValidateRes{string status = 1;}
 
 //AccountService
-//CreateUser
-message CreateUserReq{}
-message CreateUserRes{}
+message User {
+  string UserID = 1;
+  string Email = 2;
+  string password = 3;
+  string Username = 4 ;
+}
 
 //GetUser
-message GetUserReq{}
-message GetUserRes{}
+message GetUserReq{string UserID = 1;}
+message GetUserRes{User user = 1;}
 
 //GetAllUsers
 message GetAllUsersReq{}
-message GetAllUsersRes{}
+message GetAllUsersRes{repeated User user = 1;}
 
 //UpdateUser
-message UpdateUserReq{}
-message UpdateUserRes{}
+message UpdateUserReq{User user = 1;}
+message UpdateUserRes{User user = 1;}
 
 //DeleteUser
-message DeleteUserReq{}
-message DeleteUserRes{}
+//should probably delete ALL user data, GDPR
+message DeleteUserReq{string UserID = 1;}
+message DeleteUserRes{User user = 1;}
 
 //TrendService
+message Trends{
+  string UserID = 1;
+  string Username = 2;
+  string TweetID = 3;
+  string Body = 4;
+  google.protobuf.Timestamp created = 5;
+  repeated string Trend = 6;
+}
+
 //GetTrend
-message GetTrendReq{}
-message GetTrendRes{}
+message GetTrendReq{string Trend = 1;}
+message GetTrendRes{repeated Trends tweets = 1;}
 
 //TweetService
+message Tweet{
+  string UserID = 1;
+  string Username = 2;
+  string TweetID = 3;
+  string Body = 4;
+  google.protobuf.Timestamp created = 5;
+}
+
 //ReturnAll
 message ReturnAllReq{}
-message ReturnAllRes{}
+message ReturnAllRes{repeated Tweet tweets = 1;}
 
 //ReturnTweet
-message ReturnTweetReq{}
-message ReturnTweetRes{}
+message ReturnTweetReq{string TweetID = 1;}
+message ReturnTweetRes{Tweet tweet = 1;}
 
 //PostTweet
-message PostTweetReq{}
-message PostTweetRes{}
+message PostTweetReq{Tweet tweet = 1;}
+message PostTweetRes{Tweet tweet = 1;}

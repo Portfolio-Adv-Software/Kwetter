@@ -6,13 +6,26 @@ import (
 	. "github.com/Portfolio-Adv-Software/Kwetter/AccountService/rabbitmq"
 	"github.com/joho/godotenv"
 	"log"
+	"sync"
 )
 
 // port 50054
 func main() {
 	loadEnv()
-	go InitGRPC()
-	go ConsumeMessage("user_queue")
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	go func() {
+		defer wg.Done()
+		InitGRPC(&wg)
+	}()
+
+	go func() {
+		defer wg.Done()
+		ConsumeMessage("user_queue", &wg)
+	}()
+	wg.Wait()
 }
 
 func loadEnv() {

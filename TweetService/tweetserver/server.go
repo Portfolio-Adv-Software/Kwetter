@@ -23,33 +23,53 @@ type TweetServiceServer struct {
 	pbtweet.UnimplementedTweetServiceServer
 }
 
-func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.TweetService_ReturnAllServer) error {
-	data := &pbtweet.Tweet{}
-	cursor, err := tweetdb.Find(context.Background(), bson.M{})
+func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
+	cursor, err := tweetdb.Find(ctx, bson.M{})
 	if err != nil {
-		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding tweets: %v", err))
 	}
-	defer cursor.Close(context.Background())
-	for cursor.Next(context.Background()) {
+	defer cursor.Close(ctx)
+
+	var tweets []*pbtweet.Tweet
+	for cursor.Next(ctx) {
+		data := &pbtweet.Tweet{}
 		err := cursor.Decode(data)
 		if err != nil {
-			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
+			return nil, status.Errorf(codes.Internal, fmt.Sprintf("error decoding data: %v", err))
 		}
-		s.Send(&pbtweet.ReturnAllRes{
-			Tweet: &pbtweet.Tweet{
-				UserID:   data.UserID,
-				Username: data.Username,
-				TweetID:  data.TweetID,
-				Body:     data.Body,
-				Created:  data.Created,
-			},
-		})
+		tweets = append(tweets, data)
 	}
-	if err := cursor.Err(); err != nil {
-		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown cursor error: %v", err))
-	}
-	return nil
+	res := &pbtweet.ReturnAllRes{Tweet: tweets}
+	return res, nil
 }
+
+//func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.Return) error {
+//	data := &pbtweet.Tweet{}
+//	cursor, err := tweetdb.Find(context.Background(), bson.M{})
+//	if err != nil {
+//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
+//	}
+//	defer cursor.Close(context.Background())
+//	for cursor.Next(context.Background()) {
+//		err := cursor.Decode(data)
+//		if err != nil {
+//			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
+//		}
+//		s.Send(&pbtweet.ReturnAllRes{
+//			Tweet: &pbtweet.Tweet{
+//				UserID:   data.UserID,
+//				Username: data.Username,
+//				TweetID:  data.TweetID,
+//				Body:     data.Body,
+//				Created:  data.Created,
+//			},
+//		})
+//	}
+//	if err := cursor.Err(); err != nil {
+//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown cursor error: %v", err))
+//	}
+//	return nil
+//}
 
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
 	tweetID := req.TweetID

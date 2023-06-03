@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"sync"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -17,7 +18,8 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func ConsumeMessage(queue string) {
+func ConsumeMessage(queue string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	conn, err := amqp.Dial("amqps://ctltdklj:qV9vx5HIf7JyfDDA0fRto3Disk-T57CF@goose.rmq2.cloudamqp.com/ctltdklj")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
