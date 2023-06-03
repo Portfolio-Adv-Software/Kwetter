@@ -200,6 +200,7 @@ jobs:
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
  
       - name: Check for changes in AuthService
         id: check-auth-service
