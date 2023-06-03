@@ -13,7 +13,7 @@ service AuthService{
     option (google.api.http) = {post: "/auth/login"};
   }
   rpc Validate(ValidateReq) returns(ValidateRes){
-    option (google.api.http) = {get: "/auth/validate"};
+    option (google.api.http) = {post: "/auth/validate"};
   }
 }
 

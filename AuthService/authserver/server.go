@@ -66,8 +66,8 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pb
 	}
 	token, _ := generateJWTToken(user)
 	return &pbauth.LoginRes{
-		Token:  token,
 		Status: "Login succesful",
+		Token:  token,
 	}, nil
 }
 
