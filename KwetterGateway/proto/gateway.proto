@@ -3,7 +3,6 @@ option go_package = ".";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
-import "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto/auth.proto";
 
 
 service AuthService{
