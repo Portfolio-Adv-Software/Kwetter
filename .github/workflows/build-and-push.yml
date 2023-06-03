@@ -42,7 +42,7 @@ jobs:
       - name: Build Tweet Service
         if: ${{ steps.check-tweet-service.outputs.changes != '' }}
         working-directory: TweetService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +%Y-%m-%d) .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +'%Y%m%d') .
       
       - name: Push to Docker Hub
         if: ${{ steps.check-tweet-service.outputs.changes != '' }}
@@ -51,7 +51,7 @@ jobs:
           context: TweetService
           file: TweetService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +%Y-%m-%d)
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +'%Y%m%d')
           
   trend-service:
     environment: TrendService
@@ -85,7 +85,7 @@ jobs:
       - name: Build Trend Service
         if: ${{ steps.check-trend-service.outputs.changes != '' }}
         working-directory: TrendService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +%Y-%m-%d) .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +'%Y%m%d') .
       
       - name: Push to Docker Hub
         if: ${{ steps.check-trend-service.outputs.changes != '' }}
@@ -94,7 +94,7 @@ jobs:
           context: TrendService
           file: TrendService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +%Y-%m-%d)
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +'%Y%m%d')
           
   account-service:
     environment: AccountService
@@ -128,7 +128,7 @@ jobs:
       - name: Build Account Service
         if: ${{ steps.check-account-service.outputs.changes != '' }}
         working-directory: AccountService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +%Y-%m-%d) .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +'%Y%m%d') .
       
       - name: Push to Docker Hub
         if: ${{ steps.check-account-service.outputs.changes != '' }}
@@ -137,7 +137,7 @@ jobs:
           context: AccountService
           file: AccountService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +%Y-%m-%d)
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +'%Y%m%d')
   
   gateway-service:
     environment: KwetterGateway
@@ -168,7 +168,7 @@ jobs:
       - name: Build KwetterGateway
         if: ${{ steps.check-gateway-service.outputs.changes != '' }}
         working-directory: KwetterGateway
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +%Y-%m-%d) .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +'%Y%m%d') .
       
       - name: Push to Docker Hub
         if: ${{ steps.check-gateway-service.outputs.changes != '' }}
@@ -177,7 +177,7 @@ jobs:
           context: KwetterGateway
           file: KwetterGateway/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +%Y-%m-%d)
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +'%Y%m%d')
   
   auth-service:
     environment: AuthService
@@ -200,6 +200,7 @@ jobs:
         env:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
  
       - name: Check for changes in AuthService
         id: check-auth-service
@@ -211,7 +212,7 @@ jobs:
       - name: Build Auth Service
         if: ${{ steps.check-auth-service.outputs.changes != '' }}
         working-directory: AuthService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +%Y-%m-%d) .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +'%Y%m%d') .
       
       - name: Push to Docker Hub
         if: ${{ steps.check-auth-service.outputs.changes != '' }}
@@ -220,4 +221,4 @@ jobs:
           context: AuthService
           file: AuthService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +%Y-%m-%d)
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +'%Y%m%d')
