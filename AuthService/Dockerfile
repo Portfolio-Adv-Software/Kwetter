@@ -11,13 +11,13 @@ COPY . .
 
 ARG TARGET_FILE=main.go
 
-RUN go build -o /account-service ${TARGET_FILE}
+RUN go build -o /auth-service ${TARGET_FILE}
 
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /account-service /
+COPY --from=builder /auth-service /
 
-EXPOSE 50054
+EXPOSE 50053
 
-CMD ["/account-service"]
+CMD ["/auth-service"]
