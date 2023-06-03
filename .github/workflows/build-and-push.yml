@@ -32,17 +32,26 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
  
+      - name: Check for changes in TweetService
+        id: check-tweet-service
+        run: |
+          git fetch
+          changed_files=$(git diff --name-only origin/main -- TweetService/)
+          echo "::set-output name=changes::${changed_files}"
+      
       - name: Build Tweet Service
+        if: ${{ steps.check-tweet-service.outputs.changes != '' }}
         working-directory: TweetService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +%Y-%m-%d) .
       
       - name: Push to Docker Hub
+        if: ${{ steps.check-tweet-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: TweetService
           file: TweetService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-$(date +%Y-%m-%d)
           
   trend-service:
     environment: TrendService
@@ -66,17 +75,26 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
  
+      - name: Check for changes in TrendService
+        id: check-trend-service
+        run: |
+          git fetch
+          changed_files=$(git diff --name-only origin/main -- TrendService/)
+          echo "::set-output name=changes::${changed_files}"
+      
       - name: Build Trend Service
+        if: ${{ steps.check-trend-service.outputs.changes != '' }}
         working-directory: TrendService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +%Y-%m-%d) .
       
       - name: Push to Docker Hub
+        if: ${{ steps.check-trend-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: TrendService
           file: TrendService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-$(date +%Y-%m-%d)
           
   account-service:
     environment: AccountService
@@ -100,17 +118,26 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
  
+      - name: Check for changes in AccountService
+        id: check-account-service
+        run: |
+          git fetch
+          changed_files=$(git diff --name-only origin/main -- AccountService/)
+          echo "::set-output name=changes::${changed_files}"
+      
       - name: Build Account Service
+        if: ${{ steps.check-account-service.outputs.changes != '' }}
         working-directory: AccountService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +%Y-%m-%d) .
       
       - name: Push to Docker Hub
+        if: ${{ steps.check-account-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: AccountService
           file: AccountService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-$(date +%Y-%m-%d)
   
   gateway-service:
     environment: KwetterGateway
@@ -131,17 +158,26 @@ jobs:
         with: 
           go-version: 1.20
  
+      - name: Check for changes in KwetterGateway
+        id: check-gateway-service
+        run: |
+          git fetch
+          changed_files=$(git diff --name-only origin/main -- KwetterGateway/)
+          echo "::set-output name=changes::${changed_files}"
+      
       - name: Build KwetterGateway
+        if: ${{ steps.check-gateway-service.outputs.changes != '' }}
         working-directory: KwetterGateway
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +%Y-%m-%d) .
       
       - name: Push to Docker Hub
+        if: ${{ steps.check-gateway-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: KwetterGateway
           file: KwetterGateway/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-$(date +%Y-%m-%d)
   
   auth-service:
     environment: AuthService
@@ -165,14 +201,23 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
  
+      - name: Check for changes in AuthService
+        id: check-auth-service
+        run: |
+          git fetch
+          changed_files=$(git diff --name-only origin/main -- AuthService/)
+          echo "::set-output name=changes::${changed_files}"
+      
       - name: Build Auth Service
+        if: ${{ steps.check-auth-service.outputs.changes != '' }}
         working-directory: AuthService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-${{ github.sha }} .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +%Y-%m-%d) .
       
       - name: Push to Docker Hub
+        if: ${{ steps.check-auth-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: AuthService
           file: AuthService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-${{ github.sha }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-$(date +%Y-%m-%d)
