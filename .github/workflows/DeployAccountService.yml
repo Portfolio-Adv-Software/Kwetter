@@ -26,6 +26,7 @@ jobs:
 
       - name: Create .env file
         run: | 
+          cd AccountService
           echo "MONGO_USERNAME=${{ secrets.MONGO_USERNAME }}" > .env
           echo "MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}" >> .env
 
