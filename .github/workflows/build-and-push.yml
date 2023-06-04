@@ -74,7 +74,7 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
       - name: Build Trend Service
-        if: github.event_path == 'TrendService/**'
+        if: github.event_path == 'Kwetter/TrendService/**'
         working-directory: TrendService
         run: docker build \
           --build-arg MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
@@ -82,7 +82,7 @@ jobs:
           -t trend-service-latest .
 
       - name: Push to Docker Hub
-        if: github.event_path == 'TrendService/**'
+        if: github.event_path == 'Kwetter/TrendService/**'
         uses: docker/build-push-action@v2
         with:
           context: TrendService
