@@ -1,4 +1,4 @@
-name: Go
+name: Deploy Gateway
 on:
   push:
     branches: [ "main" ]
