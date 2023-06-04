@@ -83,7 +83,10 @@ jobs:
       - name: Build Trend Service
         if: ${{ steps.check-trend-service.outputs.changes != '' }}
         working-directory: TrendService
-        run: docker build . -t trend-service-latest
+        run: docker build \
+          --build-arg MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
+          --build-arg MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
+          -t trend-service-latest .
 
       - name: Push to Docker Hub
         if: ${{ steps.check-trend-service.outputs.changes != '' }}

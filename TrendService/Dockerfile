@@ -10,6 +10,8 @@ RUN go mod download
 COPY . .
 
 ARG TARGET_FILE=main.go
+ARG MONGO_USERNAME
+ARG MONGO_PASSWORD
 
 RUN go build -o /trend-service ${TARGET_FILE}
 
@@ -17,6 +19,9 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /trend-service /
+
+ENV MONGO_USERNAME=$MONGO_USERNAME
+ENV MONGO_PASSWORD=$MONGO_PASSWORD
 
 EXPOSE 50052
 
