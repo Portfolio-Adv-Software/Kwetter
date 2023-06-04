@@ -5,7 +5,6 @@ RUN apk update && apk add --no-cache git ca-certificates
 WORKDIR /app
 
 COPY go.mod go.sum ./
-
 RUN go mod download
 
 COPY . .
@@ -19,6 +18,7 @@ FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /gateway /
 
-EXPOSE 40100
+EXPOSE 8080
+EXPOSE 50055
 
 CMD ["/gateway"]

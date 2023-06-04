@@ -14,10 +14,16 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 )
 
 type TrendServiceServer struct {
 	pbtrend.UnimplementedTrendServiceServer
+}
+
+func (t TrendServiceServer) GetTrend(ctx context.Context, req *pbtrend.GetTrendReq) (*pbtrend.GetTrendRes, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTrendReq) (*pbtrend.PostTrendRes, error) {
@@ -44,7 +50,8 @@ var db *mongo.Client
 var trenddb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50052")
 
