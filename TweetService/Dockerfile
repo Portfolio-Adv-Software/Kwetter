@@ -12,13 +12,11 @@ COPY . .
 ARG TARGET_FILE=main.go
 
 RUN go build -o /tweet-service ${TARGET_FILE}
-COPY .env /app/.env
 
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /tweet-service /
-COPY --from=builder /app/.env .
 
 EXPOSE 50051
 

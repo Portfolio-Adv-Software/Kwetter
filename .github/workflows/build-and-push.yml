@@ -166,7 +166,7 @@ jobs:
 
       - name: Build Auth Service
         working-directory: AuthService
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-latest .
+        run: docker build . -t auth-service-latest
 
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
@@ -174,4 +174,5 @@ jobs:
           context: AuthService
           file: AuthService/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-latest
+          repository: ${{ secrets.DOCKER_USERNAME }}/kwetter
+          tags: auth-service-latest
