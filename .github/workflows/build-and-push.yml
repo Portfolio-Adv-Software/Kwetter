@@ -73,14 +73,8 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
-      - name: Check for changes in TrendService
-        id: check-trend-service
-        uses: tj-actions/changed-files@v1
-        with:
-          folder: TrendService
-
       - name: Build Trend Service
-        if: ${{ steps.check-trend-service.outputs.files_changed == 'true' }}
+        if: github.event_path == 'TrendService/**'
         working-directory: TrendService
         run: docker build \
           --build-arg MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
@@ -88,7 +82,7 @@ jobs:
           -t trend-service-latest .
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-trend-service.outputs.files_changed == 'true' }}
+        if: github.event_path == 'TrendService/**'
         uses: docker/build-push-action@v2
         with:
           context: TrendService
