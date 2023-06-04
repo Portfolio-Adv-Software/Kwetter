@@ -9,7 +9,6 @@ RUN go mod download
 
 COPY . .
 
-# Load environment variables from build arguments
 ARG TARGET_FILE=main.go
 
 RUN go build -o /trend-service ${TARGET_FILE}

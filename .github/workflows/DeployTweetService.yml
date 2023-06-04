@@ -23,9 +23,12 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.20
-        env:
-          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
+      - name: Create .env file
+        run: |
+          cd TweetService
+          echo "MONGO_USERNAME=${{ secrets.MONGO_USERNAME }}" > .env
+          echo "MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}" >> .env
 
       - name: Build Tweet Service
         working-directory: TweetService
