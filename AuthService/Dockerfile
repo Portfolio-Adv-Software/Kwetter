@@ -12,11 +12,13 @@ COPY . .
 ARG TARGET_FILE=main.go
 
 RUN go build -o /auth-service ${TARGET_FILE}
+COPY .env /app/.env
 
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /auth-service /
+COPY --from=builder /app/.env .
 
 EXPOSE 50053
 
