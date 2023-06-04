@@ -1,4 +1,4 @@
-name: Go
+name: Deploy AuthService
 on:
   push:
     branches: [ "main" ]

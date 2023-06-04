@@ -1,9 +1,9 @@
-name: Go
+name: Deploy TweetService
 on:
   push:
     branches: [ "main" ]
     paths:
-      - AccountService/**
+      - TweetService/**
 jobs:
   tweet-service:
     environment: TweetService
