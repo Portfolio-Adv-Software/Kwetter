@@ -75,13 +75,12 @@ jobs:
 
       - name: Check for changes in TrendService
         id: check-trend-service
-        run: |
-          git fetch
-          changed_files=$(git diff --name-only origin/main -- Kwetter/TrendService/)
-          echo "::set-output name=changes::${changed_files}"
+        uses: tj-actions/changed-files@v1
+        with:
+          folder: TrendService
 
       - name: Build Trend Service
-        if: ${{ steps.check-trend-service.outputs.changes != '' }}
+        if: ${{ steps.check-trend-service.outputs.files_changed == 'true' }}
         working-directory: TrendService
         run: docker build \
           --build-arg MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
@@ -89,7 +88,7 @@ jobs:
           -t trend-service-latest .
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-trend-service.outputs.changes != '' }}
+        if: ${{ steps.check-trend-service.outputs.files_changed == 'true' }}
         uses: docker/build-push-action@v2
         with:
           context: TrendService
