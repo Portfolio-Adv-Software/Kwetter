@@ -15,6 +15,7 @@ RUN go build -o /account-service ${TARGET_FILE}
 
 FROM scratch
 
+COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /account-service /
 

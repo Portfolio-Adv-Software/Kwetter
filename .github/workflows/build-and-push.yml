@@ -2,13 +2,18 @@ name: Go
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    paths:
+      - KwetterGateway/**
+      - AccountService/**
+      - AuthService/**
+      - TweetService/**
+      - TrendService/**
 
 env:
   ACTIONS_STEP_DEBUG: true
 jobs:
   tweet-service:
+    if: ${{ github.event_name == 'push' && contains(github.event.paths, 'TweetService/**') }}
     environment: TweetService
     name: Build TweetService
     runs-on: ubuntu-latest
@@ -30,20 +35,11 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
-      - name: Check for changes in TweetService
-        id: check-tweet-service
-        run: |
-          git fetch
-          changed_files=$(git diff --name-only origin/main -- TweetService/)
-          echo "::set-output name=changes::${changed_files}"
-
       - name: Build Tweet Service
-        if: ${{ steps.check-tweet-service.outputs.changes != '' }}
         working-directory: TweetService
         run: docker build . -t tweet-service-latest
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-tweet-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: TweetService
@@ -52,6 +48,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:tweet-service-latest
 
   trend-service:
+    if: ${{ github.event_name == 'push' && contains(github.event.paths, 'TrendService/**') }}
     environment: TrendService
     name: Build TrendService
     runs-on: ubuntu-latest
@@ -73,16 +70,7 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
-      - name: Build Trend Service
-        if: github.event_path == 'Kwetter/TrendService/**'
-        working-directory: TrendService
-        run: docker build \
-          --build-arg MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
-          --build-arg MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
-          -t trend-service-latest .
-
       - name: Push to Docker Hub
-        if: github.event_path == 'Kwetter/TrendService/**'
         uses: docker/build-push-action@v2
         with:
           context: TrendService
@@ -91,6 +79,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:trend-service-latest
 
   account-service:
+    if: ${{ github.event_name == 'push' && contains(github.event.paths, 'AccountService/**') }}
     environment: AccountService
     name: Build AccountService
     runs-on: ubuntu-latest
@@ -112,20 +101,11 @@ jobs:
           MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
-      - name: Check for changes in AccountService
-        id: check-account-service
-        run: |
-          git fetch
-          changed_files=$(git diff --name-only origin/main -- AccountService/)
-          echo "::set-output name=changes::${changed_files}"
-
       - name: Build Account Service
-        if: ${{ steps.check-account-service.outputs.changes != '' }}
         working-directory: AccountService
         run: docker build . -t account-service-latest
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-account-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: AccountService
@@ -134,6 +114,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:account-service-latest
 
   gateway-service:
+    if: ${{ github.event_name == 'push' && contains(github.event.paths, 'KwetterGateway/**') }}
     environment: KwetterGateway
     name: Build KwetterGateway
     runs-on: ubuntu-latest
@@ -152,20 +133,11 @@ jobs:
         with:
           go-version: 1.20
 
-      - name: Check for changes in KwetterGateway
-        id: check-kwetter-gateway
-        run: |
-          git fetch
-          changed_files=$(git diff --name-only origin/main -- KwetterGateway/)
-          echo "::set-output name=changes::${changed_files}"
-
       - name: Build KwetterGateway
-        if: ${{ steps.check-kwetter-gateway.outputs.changes != '' }}
         working-directory: KwetterGateway
         run: docker build . -t gateway-service-latest
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-kwetter-gateway.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: KwetterGateway
@@ -174,6 +146,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:gateway-service-latest
 
   auth-service:
+    if: ${{ github.event_name == 'push' && contains(github.event.paths, 'AuthService/**') }}
     environment: AuthService
     name: Build AuthService
     runs-on: ubuntu-latest
@@ -196,20 +169,11 @@ jobs:
           MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
-      - name: Check for changes in AuthService
-        id: check-auth-service
-        run: |
-          git fetch
-          changed_files=$(git diff --name-only origin/main -- AuthService/)
-          echo "::set-output name=changes::${changed_files}"
-
       - name: Build Auth Service
-        if: ${{ steps.check-auth-service.outputs.changes != '' }}
         working-directory: AuthService
         run: docker build . -t auth-service-latest
 
       - name: Push to Docker Hub
-        if: ${{ steps.check-auth-service.outputs.changes != '' }}
         uses: docker/build-push-action@v2
         with:
           context: AuthService
