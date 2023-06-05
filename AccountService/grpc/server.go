@@ -22,6 +22,10 @@ type UserServiceServer struct {
 	pbuser.UnimplementedUserServiceServer
 }
 
+func (u UserServiceServer) GetAllUserData(ctx context.Context, req *pbuser.GetAllUserDataReq) (*pbuser.GetAllUserDataRes, error) {
+	//TODO implement me
+	panic("implement me")
+}
 func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUserReq) (*pbuser.CreateUserRes, error) {
 	data := req.GetUser()
 
