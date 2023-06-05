@@ -5,20 +5,20 @@ RUN apk update && apk add --no-cache git ca-certificates
 WORKDIR /app
 
 COPY go.mod go.sum ./
-
 RUN go mod download
 
 COPY . .
 
 ARG TARGET_FILE=main.go
 
-RUN go build -o /gateway ${TARGET_FILE}
+RUN go build -o /account-service ${TARGET_FILE}
 
 FROM scratch
 
+COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /gateway /
+COPY --from=builder /account-service /
 
 EXPOSE 50054
 
-CMD ["/gateway"]
+CMD ["/account-service"]

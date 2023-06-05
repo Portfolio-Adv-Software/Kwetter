@@ -15,20 +15,25 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 )
 
 type UserServiceServer struct {
 	pbuser.UnimplementedUserServiceServer
 }
 
+func (u UserServiceServer) GetAllUserData(ctx context.Context, req *pbuser.GetAllUserDataReq) (*pbuser.GetAllUserDataRes, error) {
+	//TODO implement me
+	panic("implement me")
+}
 func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUserReq) (*pbuser.CreateUserRes, error) {
 	data := req.GetUser()
 
 	user := &pbuser.User{
 		UserID:   data.GetUserID(),
-		Username: data.GetUsername(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
+		Username: data.GetUsername(),
 	}
 
 	_, err := accountdb.InsertOne(ctx, user)
@@ -49,9 +54,9 @@ func (u UserServiceServer) GetUser(ctx context.Context, req *pbuser.GetUserReq) 
 
 	user := &pbuser.User{
 		UserID:   data.GetUserID(),
-		Username: data.GetUsername(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
+		Username: data.GetUsername(),
 	}
 	res := &pbuser.GetUserRes{User: user}
 	return res, nil
@@ -81,9 +86,9 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 	user := req.GetUser()
 	data := &pbuser.User{}
 	update := bson.M{"$set": bson.M{
-		"username": user.GetUsername(),
 		"email":    user.GetEmail(),
 		"password": user.GetPassword(),
+		"username": user.GetUsername(),
 	}}
 	err := accountdb.FindOneAndUpdate(ctx, user.GetUserID(), update).Decode(data)
 	if err != nil {
@@ -91,9 +96,9 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 	}
 	updatedUser := &pbuser.User{
 		UserID:   data.GetUserID(),
-		Username: data.GetUsername(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
+		Username: data.GetUsername(),
 	}
 	res := &pbuser.UpdateUserRes{User: updatedUser}
 	return res, nil
@@ -108,7 +113,8 @@ var db *mongo.Client
 var accountdb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50054")
 

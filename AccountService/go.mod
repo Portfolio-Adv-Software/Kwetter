@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/joho/godotenv v1.5.1
+	github.com/rabbitmq/amqp091-go v1.8.1
 	go.mongodb.org/mongo-driver v1.11.6
 	golang.org/x/net v0.8.0
 	google.golang.org/grpc v1.55.0

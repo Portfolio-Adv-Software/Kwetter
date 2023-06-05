@@ -9,25 +9,28 @@ import (
 	"sync"
 )
 
-var wg sync.WaitGroup
-
 func main() {
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	loadEnv()
+
+	go func() {
+		defer wg.Done()
+		ConsumeMessage("tweet_queue", &wg)
+	}()
+	go func() {
+		defer wg.Done()
+		go InitGRPC(&wg)
+	}()
+	wg.Wait()
+}
+
+// port 50052
+func loadEnv() {
 	fmt.Println("loading env")
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		ConsumeMessage("tweet_queue")
-	}()
-
-	go func() {
-		defer wg.Done()
-		InitGRPC()
-	}()
-	wg.Wait()
 }

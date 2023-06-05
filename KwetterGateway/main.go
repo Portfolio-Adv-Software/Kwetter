@@ -1,62 +1,32 @@
 package main
 
 import (
-	"bufio"
-	"context"
-	"fmt"
-	. "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/grpc/TweetService"
-	pb "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/grpc/TweetService/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
-	"os"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/gatewayserver"
+	"sync"
 )
 
+// port 50055
 func main() {
-	//InitRouter()
-	c, _ := InitClient()
-	scanner := bufio.NewScanner(os.Stdin)
-	for {
-		fmt.Print("UserID: ")
-		scanner.Scan()
-		userID := scanner.Text()
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-		fmt.Print("UserName: ")
-		scanner.Scan()
-		username := scanner.Text()
-
-		fmt.Print("tweetID: ")
-		scanner.Scan()
-		tweetID := scanner.Text()
-
-		fmt.Print("Body: ")
-		scanner.Scan()
-		body := scanner.Text()
-
-		c.PostTweet(context.Background(), demoTweet(userID, username, tweetID, body))
-
-		fmt.Print("Post another tweet? (y/n): ")
-		scanner.Scan()
-		choice := scanner.Text()
-		if choice != "y" {
-			break
-		}
-	}
+	server := &gatewayserver.Server{}
+	var config gatewayserver.ServiceConfig
+	setConfig(&config)
+	go func() {
+		defer wg.Done()
+		gatewayserver.InitMux(&wg, &config)
+	}()
+	go func() {
+		defer wg.Done()
+		server.StartGRPCServer(&wg)
+	}()
+	wg.Wait()
 }
 
-func demoTweet(userID string, username string, tweetID string, body string) *pb.PostTweetReq {
-	tweet := &pb.Tweet{
-		//UserID:   "1",
-		//Username: "John",
-		//TweetID:  "1",
-		//Body:     "This is a test tweet #Test",
-		UserID:   userID,
-		Username: username,
-		TweetID:  tweetID,
-		Body:     body,
-		Created:  timestamppb.Now(),
-	}
-
-	req := &pb.PostTweetReq{
-		Tweet: tweet,
-	}
-	return req
+func setConfig(config *gatewayserver.ServiceConfig) {
+	config.AuthServiceAddr = "localhost:50053"
+	config.UserServiceAddr = "localhost:50054"
+	config.TrendServiceAddr = "localhost:50052"
+	config.TweetServiceAddr = "localhost:50051"
 }
