@@ -3,6 +3,9 @@ package grpc
 import (
 	"fmt"
 	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/rabbitmq"
+	"github.com/google/uuid"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -16,6 +19,7 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
 type UserServiceServer struct {
@@ -45,7 +49,7 @@ func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUse
 }
 
 func (u UserServiceServer) GetUser(ctx context.Context, req *pbuser.GetUserReq) (*pbuser.GetUserRes, error) {
-	userID := req.GetUserID()
+	userID := req.GetUserid()
 	data := &pbuser.User{}
 	err := accountdb.FindOne(ctx, bson.M{"userID": userID}).Decode(data)
 	if err != nil {
@@ -105,8 +109,96 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 }
 
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUserReq) (*pbuser.DeleteUserRes, error) {
-	//TODO implement me
-	panic("implement me")
+	// Set up RabbitMQ connection
+	conn, ch, err := rabbitmq.SetupRabbitMQ()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	defer ch.Close()
+
+	// Set up callback queue
+	callbackQueue, err := ch.QueueDeclare(
+		"",    // Empty queue name (let RabbitMQ generate a unique name)
+		false, // Durable
+		true,  // Delete when unused
+		true,  // Exclusive (only allow the current connection to access the queue)
+		false, // No-wait
+		nil,   // Arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+	correlationID := uuid.New().String()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	err = ch.PublishWithContext(ctx,
+		"gdpr_delete", // Fanout exchange name
+		"",            // Empty routing key for fanout exchange
+		false,         // Mandatory
+		false,         // Immediate
+		amqp.Publishing{
+			ContentType:   "text/plain",
+			Body:          []byte(req.GetUserid()),
+			CorrelationId: correlationID,      // Set the correlation ID
+			ReplyTo:       callbackQueue.Name, // Set the callback queue
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	acks := make(map[string]bool)
+	expectedAcks := 3
+	callbackMsgs, err := ch.Consume(
+		callbackQueue.Name, // Callback queue name
+		"",                 // Consumer
+		true,               // Auto-acknowledge
+		false,              // Exclusive
+		false,              // No-local
+		false,              // No-wait
+		nil,                // Arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+	for msg := range callbackMsgs {
+		if msg.CorrelationId == correlationID {
+			acks[msg.ReplyTo] = true
+			if len(acks) == expectedAcks {
+				break
+			}
+		}
+	}
+
+	// All acknowledgments received, now delete user data in UserService
+	// Perform the deletion logic for the UserService using the req.UserID
+	filter := bson.M{"UserID": req.GetUserid()}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := accountdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if count == 0 {
+			res := &pbuser.DeleteUserRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := accountdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			res := &pbuser.DeleteUserRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbuser.DeleteUserRes{Status: "User data deleted successfully"}
+	return res, nil
 }
 
 var db *mongo.Client

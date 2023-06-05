@@ -37,6 +37,11 @@ func ProduceMessage(queue string, user *pb.User) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	user = &pb.User{
+		Id:       user.GetId(),
+		Email:    user.GetEmail(),
+		Password: user.GetPassword(),
+	}
 	body, err := proto.Marshal(user)
 	if err != nil {
 		log.Panicf("Failed to marshal user: %v", err)

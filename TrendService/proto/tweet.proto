@@ -16,6 +16,7 @@ message Tweet{
 service TrendService{
   rpc PostTrend(PostTrendReq) returns (PostTrendRes);
   rpc GetTrend(GetTrendReq) returns (GetTrendRes);
+  rpc DeleteData(DeleteDataReq) returns (DeleteDataRes);
 }
 
 //posttrend
@@ -25,3 +26,7 @@ message PostTrendRes{Tweet tweet = 1;}
 //gettrend
 message GetTrendReq{string Trends = 1;}
 message GetTrendRes{repeated Tweet tweets = 1;}
+
+//deletedata
+message DeleteDataReq{string userid = 1; string CorrelationId = 2;}
+message DeleteDataRes{string status = 1;}

@@ -5,7 +5,9 @@ import (
 	pbauth "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto"
 	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
 	"github.com/golang-jwt/jwt"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
@@ -23,6 +25,71 @@ import (
 
 type AuthServiceServer struct {
 	pbauth.UnimplementedAuthServiceServer
+	ch *amqp.Channel
+}
+
+func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
+	objectID, err := primitive.ObjectIDFromHex(req.GetUserid())
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": objectID}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := authdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		if count == 0 {
+			err = a.ch.PublishWithContext(
+				ctx,
+				"",
+				"auth_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+			res := &pbauth.DeleteDataRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := authdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			err = a.ch.PublishWithContext(
+				ctx,
+				"",
+				"auth_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+
+			res := &pbauth.DeleteDataRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbauth.DeleteDataRes{Status: "Failed to delete records"}
+	return res, nil
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
@@ -38,15 +105,20 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 		Password: HashPassword(req.GetPassword()),
 	}
 
-	_, err = authdb.InsertOne(ctx, newUser)
+	insertResult, err := authdb.InsertOne(ctx, newUser)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to register user: %v", err))
 	}
 
-	registeredUser := &pbauth.User{}
-	err = authdb.FindOne(ctx, bson.M{"email": newUser.GetEmail()}).Decode(registeredUser)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to retrieve registered user for queue: %v", err))
+	insertedID, ok := insertResult.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "Invalid type for InsertedID")
+	}
+
+	registeredUser := &pbauth.User{
+		Id:       insertedID.Hex(),
+		Email:    newUser.GetEmail(),
+		Password: "",
 	}
 	rabbitmq.ProduceMessage("user_queue", registeredUser)
 	return &pbauth.RegisterRes{
@@ -160,7 +232,13 @@ func InitGRPC() {
 
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
-	srv := &AuthServiceServer{}
+	conn, ch, err := rabbitmq.SetupRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	defer ch.Close()
+	srv := &AuthServiceServer{ch: ch}
 	pbauth.RegisterAuthServiceServer(s, srv)
 	reflection.Register(s)
 

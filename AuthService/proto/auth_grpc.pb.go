@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	AuthService_Register_FullMethodName = "/AuthService/Register"
-	AuthService_Login_FullMethodName    = "/AuthService/Login"
-	AuthService_Validate_FullMethodName = "/AuthService/Validate"
+	AuthService_Register_FullMethodName   = "/AuthService/Register"
+	AuthService_Login_FullMethodName      = "/AuthService/Login"
+	AuthService_Validate_FullMethodName   = "/AuthService/Validate"
+	AuthService_DeleteData_FullMethodName = "/AuthService/DeleteData"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -31,6 +32,7 @@ type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterRes, error)
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginRes, error)
 	Validate(ctx context.Context, in *ValidateReq, opts ...grpc.CallOption) (*ValidateRes, error)
+	DeleteData(ctx context.Context, in *DeleteDataReq, opts ...grpc.CallOption) (*DeleteDataRes, error)
 }
 
 type authServiceClient struct {
@@ -68,6 +70,15 @@ func (c *authServiceClient) Validate(ctx context.Context, in *ValidateReq, opts 
 	return out, nil
 }
 
+func (c *authServiceClient) DeleteData(ctx context.Context, in *DeleteDataReq, opts ...grpc.CallOption) (*DeleteDataRes, error) {
+	out := new(DeleteDataRes)
+	err := c.cc.Invoke(ctx, AuthService_DeleteData_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type AuthServiceServer interface {
 	Register(context.Context, *RegisterReq) (*RegisterRes, error)
 	Login(context.Context, *LoginReq) (*LoginRes, error)
 	Validate(context.Context, *ValidateReq) (*ValidateRes, error)
+	DeleteData(context.Context, *DeleteDataReq) (*DeleteDataRes, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginReq) (*LoginR
 }
 func (UnimplementedAuthServiceServer) Validate(context.Context, *ValidateReq) (*ValidateRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteData(context.Context, *DeleteDataReq) (*DeleteDataRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteData not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -158,6 +173,24 @@ func _AuthService_Validate_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_DeleteData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteData(ctx, req.(*DeleteDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Validate",
 			Handler:    _AuthService_Validate_Handler,
+		},
+		{
+			MethodName: "DeleteData",
+			Handler:    _AuthService_DeleteData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

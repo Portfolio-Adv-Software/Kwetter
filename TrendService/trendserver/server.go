@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	pbtrend "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"google.golang.org/grpc"
@@ -15,10 +17,72 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
 type TrendServiceServer struct {
 	pbtrend.UnimplementedTrendServiceServer
+	ch *amqp.Channel
+}
+
+func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteDataReq) (*pbtrend.DeleteDataRes, error) {
+	filter := bson.M{"_id": req.GetUserid()}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := trenddb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		if count == 0 {
+			err = t.ch.PublishWithContext(
+				ctx,
+				"",
+				"trend_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+			res := &pbtrend.DeleteDataRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := trenddb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			err = t.ch.PublishWithContext(
+				ctx,
+				"",
+				"trend_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+
+			res := &pbtrend.DeleteDataRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbtrend.DeleteDataRes{Status: "Failed to delete records"}
+	return res, nil
 }
 
 func (t TrendServiceServer) GetTrend(ctx context.Context, req *pbtrend.GetTrendReq) (*pbtrend.GetTrendRes, error) {

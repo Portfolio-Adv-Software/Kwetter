@@ -40,7 +40,7 @@ service UserService{
 message CreateUserReq{User user = 1;}
 message CreateUserRes{User user = 1;}
 
-message GetUserReq{string UserID = 1;}
+message GetUserReq{string userid = 1;}
 message GetUserRes{User user = 1;}
 
 message GetAllUsersReq{}
@@ -49,8 +49,8 @@ message GetAllUsersRes{repeated User user = 1;}
 message UpdateUserReq{User user = 1;}
 message UpdateUserRes{User user = 1;}
 
-message DeleteUserReq{string UserID = 1;}
-message DeleteUserRes{User user = 1;}
+message DeleteUserReq{string userid = 1;}
+message DeleteUserRes{string status = 1;}
 
-message GetAllUserDataReq{string UserID = 1;}
+message GetAllUserDataReq{string userid = 1;}
 message GetAllUserDataRes{UserData userdata = 1;}

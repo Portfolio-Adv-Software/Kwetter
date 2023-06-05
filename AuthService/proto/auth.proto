@@ -7,6 +7,7 @@ service AuthService{
   rpc Register(RegisterReq) returns(RegisterRes){}
   rpc Login(LoginReq) returns(LoginRes){}
   rpc Validate(ValidateReq) returns(ValidateRes){}
+  rpc DeleteData(DeleteDataReq) returns (DeleteDataRes){}
 }
 
 //Register
@@ -20,3 +21,7 @@ message LoginRes{string status = 1; string token = 2;}
 //Validate
 message ValidateReq{string token = 1;}
 message ValidateRes{string status = 1;}
+
+//DeleteData
+message DeleteDataReq{string userid = 1; string correlationId = 2;}
+message DeleteDataRes{string status = 1;}

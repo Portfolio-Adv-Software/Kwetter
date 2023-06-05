@@ -5,6 +5,7 @@ import (
 	"fmt"
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
 	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -17,10 +18,71 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"time"
 )
 
 type TweetServiceServer struct {
 	pbtweet.UnimplementedTweetServiceServer
+	ch *amqp.Channel
+}
+
+func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteDataReq) (*pbtweet.DeleteDataRes, error) {
+	filter := bson.M{"_id": req.GetUserid()}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := tweetdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if count == 0 {
+			err = t.ch.PublishWithContext(
+				ctx,
+				"",
+				"tweet_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+			res := &pbtweet.DeleteDataRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := tweetdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			err = t.ch.PublishWithContext(
+				ctx,
+				"",
+				"tweet_deletion_ack",
+				false,
+				false,
+				amqp.Publishing{
+					ContentType:   "text/plain",
+					Body:          []byte("ACK"),
+					CorrelationId: req.GetCorrelationId(),
+				})
+			if err != nil {
+				log.Println(err)
+			}
+
+			res := &pbtweet.DeleteDataRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbtweet.DeleteDataRes{Status: "Failed to delete records"}
+	return res, nil
 }
 
 func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
@@ -42,34 +104,6 @@ func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllR
 	res := &pbtweet.ReturnAllRes{Tweet: tweets}
 	return res, nil
 }
-
-//func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.Return) error {
-//	data := &pbtweet.Tweet{}
-//	cursor, err := tweetdb.Find(context.Background(), bson.M{})
-//	if err != nil {
-//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
-//	}
-//	defer cursor.Close(context.Background())
-//	for cursor.Next(context.Background()) {
-//		err := cursor.Decode(data)
-//		if err != nil {
-//			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
-//		}
-//		s.Send(&pbtweet.ReturnAllRes{
-//			Tweet: &pbtweet.Tweet{
-//				UserID:   data.UserID,
-//				Username: data.Username,
-//				TweetID:  data.TweetID,
-//				Body:     data.Body,
-//				Created:  data.Created,
-//			},
-//		})
-//	}
-//	if err := cursor.Err(); err != nil {
-//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown cursor error: %v", err))
-//	}
-//	return nil
-//}
 
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
 	tweetID := req.TweetID
@@ -134,7 +168,13 @@ func InitGRPC() {
 
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
-	srv := &TweetServiceServer{}
+	conn, ch, err := rabbitmq.SetupRabbitMQ()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	defer ch.Close()
+	srv := &TweetServiceServer{ch: ch}
 	pbtweet.RegisterTweetServiceServer(s, srv)
 	reflection.Register(s)
 
