@@ -5,6 +5,7 @@ import (
 	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
 	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/rabbitmq"
 	"github.com/google/uuid"
+
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
