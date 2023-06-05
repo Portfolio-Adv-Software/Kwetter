@@ -10,16 +10,16 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	server := &gatewayserver.Server{}
 	var config gatewayserver.ServiceConfig
 	setConfig(&config)
 	go func() {
 		defer wg.Done()
-		gatewayserver.InitMux(&wg, &config)
+		gatewayserver.InitGRPC(&wg, &config)
 	}()
+
 	go func() {
 		defer wg.Done()
-		server.StartGRPCServer(&wg)
+		gatewayserver.InitMux(&wg, &config)
 	}()
 	wg.Wait()
 }
