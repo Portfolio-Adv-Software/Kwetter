@@ -22,7 +22,6 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
-	log.Println(req.String())
 	return a.AuthClient.Register(ctx, req)
 }
 
@@ -32,7 +31,6 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pb.LoginReq) (*pb.Log
 }
 
 func (a AuthServiceServer) Validate(ctx context.Context, req *pb.ValidateReq) (*pb.ValidateRes, error) {
-	log.Println(req.String())
 	return a.AuthClient.Validate(ctx, req)
 }
 
@@ -197,26 +195,6 @@ func (s *Server) registerLocalEndpoints(ctx context.Context) {
 	// Register the TweetServiceServer
 	tweetServer := &TweetServiceServer{TweetClient: s.tweetClient}
 	pb.RegisterTweetServiceHandlerServer(ctx, s.mux, tweetServer)
-}
-
-// registers mux to microservice endpoints
-func registerEndpoints(ctx context.Context, mux *runtime.ServeMux, config *ServiceConfig) {
-	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, config.AuthServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register AuthService handler: %v", err)
-	}
-	err = pb.RegisterUserServiceHandlerFromEndpoint(ctx, mux, config.UserServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register UserService handler: %v", err)
-	}
-	err = pb.RegisterTrendServiceHandlerFromEndpoint(ctx, mux, config.TrendServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register TrendService handler: %v", err)
-	}
-	err = pb.RegisterTweetServiceHandlerFromEndpoint(ctx, mux, config.TweetServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register TweetService handler: %v", err)
-	}
 }
 
 func (s *Server) StartGRPCServer(wg *sync.WaitGroup) {
