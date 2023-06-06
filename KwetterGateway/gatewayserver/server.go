@@ -58,7 +58,6 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserReq
 }
 
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error) {
-	log.Println("delete user @ gateway")
 	return u.UserClient.DeleteUser(ctx, req)
 }
 
@@ -129,8 +128,8 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 
 func InitMux(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	defer wg.Done()
-	handler := loggingMiddleware(mux)
-	err := http.ListenAndServe(":8080", handler)
+	//handler := loggingMiddleware(mux)
+	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		log.Fatalf("failed to start gateway server: %v", err)
 	}
@@ -151,25 +150,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		//log.Printf("Sent response: %d", w.(http.ResponseWriter))
 	})
 }
-
-//func registerEndpoints(ctx context.Context, mux *runtime.ServeMux, config *ServiceConfig) {
-//	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, config.AuthServiceAddr, []userserver.DialOption{userserver.WithTransportCredentials(insecure.NewCredentials())})
-//	if err != nil {
-//		log.Fatalf("failed to register AuthService handler: %v", err)
-//	}
-//	err = pb.RegisterUserServiceHandlerFromEndpoint(ctx, mux, config.UserServiceAddr, []userserver.DialOption{userserver.WithTransportCredentials(insecure.NewCredentials())})
-//	if err != nil {
-//		log.Fatalf("failed to register UserService handler: %v", err)
-//	}
-//	err = pb.RegisterTrendServiceHandlerFromEndpoint(ctx, mux, config.TrendServiceAddr, []userserver.DialOption{userserver.WithTransportCredentials(insecure.NewCredentials())})
-//	if err != nil {
-//		log.Fatalf("failed to register TrendService handler: %v", err)
-//	}
-//	err = pb.RegisterTweetServiceHandlerFromEndpoint(ctx, mux, config.TweetServiceAddr, []userserver.DialOption{userserver.WithTransportCredentials(insecure.NewCredentials())})
-//	if err != nil {
-//		log.Fatalf("failed to register TweetService handler: %v", err)
-//	}
-//}
 
 func registerAuthService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, AuthServiceAddr string) {
 	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -245,6 +225,7 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		return nil, status.Errorf(codes.Unauthenticated, "Invalid token")
 	}
 	validateReq := &pb.ValidateReq{Token: token.GetToken()}
+
 	AuthServiceAddr := config.Config.AuthServiceAddr
 	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -253,6 +234,11 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	authClient := pb.NewAuthServiceClient(authConn)
 	server := &AuthServiceServer{AuthClient: authClient}
 	validateRes, err := server.AuthClient.Validate(ctx, validateReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to validate token: %v", err)
+	}
+	log.Printf("Validation response: %v", validateRes)
+	log.Printf(validateReq.Token)
 
 	if info.FullMethod == "/proto.TweetService/PostTweet" {
 		tweetReq, ok := req.(*pb.PostTweetReq)
@@ -263,7 +249,6 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		validatedTweet := &pb.Tweet{
 			UserID:   validateRes.GetUserid(),
 			Username: tweetValue.GetUsername(),
-			TweetID:  tweetValue.GetTweetID(),
 			Body:     tweetValue.GetBody(),
 		}
 		req = &pb.PostTweetReq{Tweet: validatedTweet}
@@ -293,5 +278,6 @@ func extractToken(ctx context.Context) (token *pb.ValidateReq, err error) {
 		return nil, status.Error(codes.Unauthenticated, "Invalid token format")
 	}
 	token = &pb.ValidateReq{Token: tokenString}
+	log.Println(tokenString)
 	return token, nil
 }

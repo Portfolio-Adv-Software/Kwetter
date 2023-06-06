@@ -86,15 +86,14 @@ message UpdateUserRes{User user = 1;}
 //DeleteUser
 //should probably delete ALL user data, GDPR
 message DeleteUserReq{string userId = 1;}
-message DeleteUserRes{repeated string status = 1;}
+message DeleteUserRes{string status = 1;}
 
 //TrendService
 message Trends{
   string UserID = 1;
   string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
-  repeated string Trend = 6;
+  string Body = 3;
+  repeated string Trend = 4;
 }
 
 //GetTrend
@@ -105,8 +104,7 @@ message GetTrendRes{repeated Trends tweets = 1;}
 message Tweet{
   string UserID = 1;
   string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
+  string Body = 3;
 }
 
 //ReturnAll

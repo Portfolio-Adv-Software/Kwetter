@@ -107,10 +107,8 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 }
 
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUserReq) (*pbuser.DeleteUserRes, error) {
-	log.Println("hit deleteuser @accountservice")
 	rabbitmq.SendDeleteGDPRUser(req.GetUserId())
 	filter := bson.M{"userid": req.GetUserId()}
-	log.Printf(req.GetUserId())
 	maxRetries := 3
 	retryCount := 0
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
