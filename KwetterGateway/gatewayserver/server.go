@@ -128,8 +128,36 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 
 func InitMux(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	defer wg.Done()
-	//handler := loggingMiddleware(mux)
-	err := http.ListenAndServe(":8080", mux)
+
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	gwMux := runtime.NewServeMux(runtime.WithIncomingHeaderMatcher(customHeaderMatcher))
+	opts := []grpc.DialOption{grpc.WithInsecure()}
+
+	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, gwMux, "localhost:50055", opts)
+	if err != nil {
+		log.Fatalf("failed to register authservice handler: %v", err)
+	}
+
+	err = pb.RegisterUserServiceHandlerFromEndpoint(ctx, gwMux, "localhost:50055", opts)
+	if err != nil {
+		log.Fatalf("failed to register userservice handler: %v", err)
+	}
+
+	err = pb.RegisterTrendServiceHandlerFromEndpoint(ctx, gwMux, "localhost:50055", opts)
+	if err != nil {
+		log.Fatalf("failed to register trendservice handler: %v", err)
+	}
+
+	err = pb.RegisterTweetServiceHandlerFromEndpoint(ctx, gwMux, "localhost:50055", opts)
+	if err != nil {
+		log.Fatalf("failed to register tweetservice handler: %v", err)
+	}
+
+	handler := loggingMiddleware(gwMux)
+	err = http.ListenAndServe(":8080", handler)
 	if err != nil {
 		log.Fatalf("failed to start gateway server: %v", err)
 	}
@@ -149,6 +177,14 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 		//log.Printf("Sent response: %d", w.(http.ResponseWriter))
 	})
+}
+
+func customHeaderMatcher(headerName string) (mdName string, ok bool) {
+	// Match the "Authorization" header to pass it to gRPC metadata
+	if headerName == "Authorization" {
+		return headerName, true
+	}
+	return runtime.DefaultHeaderMatcher(headerName)
 }
 
 func registerAuthService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, AuthServiceAddr string) {
