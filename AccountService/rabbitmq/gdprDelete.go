@@ -1,9 +1,10 @@
 package rabbitmq
 
 import (
-	"encoding/json"
+	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"time"
 )
@@ -27,7 +28,8 @@ func SendDeleteGDPRUser(userid string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	body, err := json.Marshal(userid)
+	useridReq := &pbuser.DeleteUserReq{UserId: userid}
+	body, err := proto.Marshal(useridReq)
 	if err != nil {
 		log.Panicf("Failed to marshal userid: %s", err)
 	}

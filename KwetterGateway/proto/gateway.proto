@@ -86,7 +86,7 @@ message UpdateUserRes{User user = 1;}
 //DeleteUser
 //should probably delete ALL user data, GDPR
 message DeleteUserReq{string userId = 1;}
-message DeleteUserRes{string status = 1;}
+message DeleteUserRes{repeated string status = 1;}
 
 //TrendService
 message Trends{

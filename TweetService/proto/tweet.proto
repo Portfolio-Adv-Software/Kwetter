@@ -12,8 +12,7 @@ service TweetService {
 message Tweet{
   string UserID = 1;
   string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
+  string Body = 3;
 }
 
 //return all tweets

@@ -47,6 +47,7 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 
 	go func() {
 		for d := range deleteMsgs {
+			fmt.Printf("Message Body: %s\n", string(d.Body))
 			req := &pbtweet.DeleteDataReq{}
 			err := proto.Unmarshal(d.Body, req)
 			if err != nil {

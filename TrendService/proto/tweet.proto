@@ -5,9 +5,8 @@ option go_package = ".";
 message Tweet{
   string UserID = 1;
   string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
-  repeated string Trend = 5;
+  string Body = 3;
+  repeated string Trend = 4;
 }
 
 service TrendService{

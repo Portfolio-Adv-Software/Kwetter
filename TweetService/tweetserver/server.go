@@ -76,16 +76,15 @@ func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllR
 }
 
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
-	tweetID := req.TweetID
+	tweetID := req.GetTweetID()
 	data := &pbtweet.Tweet{}
-	err := tweetdb.FindOne(ctx, bson.M{"tweetid": tweetID}).Decode(data)
+	err := tweetdb.FindOne(ctx, bson.M{"_id": tweetID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
 	}
 	tweet := &pbtweet.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
-		TweetID:  data.TweetID,
 		Body:     data.Body,
 	}
 	res := &pbtweet.ReturnTweetRes{Tweet: tweet}
@@ -98,7 +97,6 @@ func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTwee
 	tweet := &pbtweet.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
-		TweetID:  data.TweetID,
 		Body:     data.Body,
 	}
 

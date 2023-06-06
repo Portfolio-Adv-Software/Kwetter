@@ -26,7 +26,7 @@ type TrendServiceServer struct {
 }
 
 func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteDataReq) (*pbtrend.DeleteDataRes, error) {
-	filter := bson.M{"_id": req.GetUserId()}
+	filter := bson.M{"userid": req.GetUserId()}
 	maxRetries := 3
 	retryCount := 0
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -67,7 +67,6 @@ func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTren
 	tweet := &pbtrend.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
-		TweetID:  data.TweetID,
 		Body:     data.Body,
 		Trend:    data.Trend,
 	}
