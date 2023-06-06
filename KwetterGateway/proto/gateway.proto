@@ -1,8 +1,8 @@
 syntax = "proto3";
+package proto;
 option go_package = ".";
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 
 service AuthService{
@@ -52,7 +52,7 @@ service TweetService{
 
 //AuthService
 //Register
-message RegisterReq{string email = 1; string password = 2;}
+message RegisterReq{string email = 1; string password = 2; bool dataPermission = 3;}
 message RegisterRes{string status = 1;}
 
 //Login
@@ -61,7 +61,7 @@ message LoginRes{string status = 1; string access_token = 2;}
 
 //Validate
 message ValidateReq{string token = 1;}
-message ValidateRes{string status = 1;}
+message ValidateRes{string status = 1; string userid = 2;}
 
 //AccountService
 message User {
@@ -94,7 +94,6 @@ message Trends{
   string Username = 2;
   string TweetID = 3;
   string Body = 4;
-  google.protobuf.Timestamp created = 5;
   repeated string Trend = 6;
 }
 
@@ -108,7 +107,6 @@ message Tweet{
   string Username = 2;
   string TweetID = 3;
   string Body = 4;
-  google.protobuf.Timestamp created = 5;
 }
 
 //ReturnAll

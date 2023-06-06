@@ -99,7 +99,6 @@ func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTren
 		TweetID:  data.TweetID,
 		Body:     data.Body,
 		Trend:    data.Trend,
-		Created:  data.Created,
 	}
 
 	_, err := trenddb.InsertOne(ctx, tweet)

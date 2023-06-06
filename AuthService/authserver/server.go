@@ -5,7 +5,6 @@ import (
 	pbauth "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto"
 	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
 	"github.com/golang-jwt/jwt"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -20,16 +19,16 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
 type AuthServiceServer struct {
 	pbauth.UnimplementedAuthServiceServer
-	ch *amqp.Channel
 }
 
 func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
-	objectID, err := primitive.ObjectIDFromHex(req.GetUserid())
+	objectID, err := primitive.ObjectIDFromHex(req.GetUserId())
 	if err != nil {
 		return nil, err
 	}
@@ -46,20 +45,6 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDat
 		}
 
 		if count == 0 {
-			err = a.ch.PublishWithContext(
-				ctx,
-				"",
-				"auth_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
 			res := &pbauth.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
@@ -68,21 +53,6 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDat
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			err = a.ch.PublishWithContext(
-				ctx,
-				"",
-				"auth_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
-
 			res := &pbauth.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}
@@ -93,16 +63,20 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDat
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
+	if !req.DataPermission {
+		return nil, status.Error(codes.Aborted, "No permission to store data")
+	}
 	data := req.GetEmail()
 	user := &pbauth.User{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
 	if err == nil {
-		return &pbauth.RegisterRes{Status: "Email is already registered"}, nil
+		return nil, status.Errorf(codes.AlreadyExists, "Email is already registered")
 	}
 
 	newUser := &pbauth.RegisterReq{
-		Email:    req.GetEmail(),
-		Password: HashPassword(req.GetPassword()),
+		Email:          req.GetEmail(),
+		Password:       HashPassword(req.GetPassword()),
+		DataPermission: req.GetDataPermission(),
 	}
 
 	insertResult, err := authdb.InsertOne(ctx, newUser)
@@ -164,16 +138,22 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq
 		return &pbauth.ValidateRes{Status: "INVALID"}, nil
 	}
 
-	user := &pbauth.User{}
+	type User struct {
+		Id    string `bson:"_id"`
+		Email string `bson:"email"`
+	}
+	user := &User{}
 	emailClaim := token.Claims.(jwt.MapClaims)
 	email := emailClaim["email"].(string)
 	err = authdb.FindOne(ctx, bson.M{"email": email}).Decode(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %v", err)
 	}
-
 	// Token is valid
-	return &pbauth.ValidateRes{Status: "VALID"}, nil
+	return &pbauth.ValidateRes{
+		Status: "Token Valid",
+		Userid: user.Id,
+	}, nil
 }
 
 var secretKey = os.Getenv("SECRET_KEY")
@@ -217,7 +197,8 @@ var db *mongo.Client
 var authdb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50053")
 
@@ -232,13 +213,7 @@ func InitGRPC() {
 
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
-	conn, ch, err := rabbitmq.SetupRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	defer ch.Close()
-	srv := &AuthServiceServer{ch: ch}
+	srv := &AuthServiceServer{}
 	pbauth.RegisterAuthServiceServer(s, srv)
 	reflection.Register(s)
 

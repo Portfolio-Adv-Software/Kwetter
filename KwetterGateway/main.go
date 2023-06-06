@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/config"
 	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/gatewayserver"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"sync"
 )
 
@@ -10,23 +12,16 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(2)
 
-	var config gatewayserver.ServiceConfig
-	setConfig(&config)
+	mux := runtime.NewServeMux()
+	config.SetConfig()
 	go func() {
 		defer wg.Done()
-		gatewayserver.InitGRPC(&wg, &config)
+		gatewayserver.InitGRPC(&wg, mux)
 	}()
 
 	go func() {
 		defer wg.Done()
-		gatewayserver.InitMux(&wg, &config)
+		gatewayserver.InitMux(&wg, mux)
 	}()
 	wg.Wait()
-}
-
-func setConfig(config *gatewayserver.ServiceConfig) {
-	config.AuthServiceAddr = "localhost:50053"
-	config.UserServiceAddr = "localhost:50054"
-	config.TrendServiceAddr = "localhost:50052"
-	config.TweetServiceAddr = "localhost:50051"
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
 	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/rabbitmq"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,16 +17,16 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"sync"
 	"time"
 )
 
 type TweetServiceServer struct {
 	pbtweet.UnimplementedTweetServiceServer
-	ch *amqp.Channel
 }
 
 func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteDataReq) (*pbtweet.DeleteDataRes, error) {
-	filter := bson.M{"_id": req.GetUserid()}
+	filter := bson.M{"userid": req.GetUserId()}
 	maxRetries := 3
 	retryCount := 0
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -39,20 +38,6 @@ func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteD
 			return nil, err
 		}
 		if count == 0 {
-			err = t.ch.PublishWithContext(
-				ctx,
-				"",
-				"tweet_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
 			res := &pbtweet.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
@@ -61,21 +46,6 @@ func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteD
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			err = t.ch.PublishWithContext(
-				ctx,
-				"",
-				"tweet_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
-
 			res := &pbtweet.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}
@@ -117,7 +87,6 @@ func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.Return
 		Username: data.Username,
 		TweetID:  data.TweetID,
 		Body:     data.Body,
-		Created:  data.Created,
 	}
 	res := &pbtweet.ReturnTweetRes{Tweet: tweet}
 	return res, nil
@@ -131,7 +100,6 @@ func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTwee
 		Username: data.Username,
 		TweetID:  data.TweetID,
 		Body:     data.Body,
-		Created:  data.Created,
 	}
 
 	re := regexp.MustCompile(`#\w+`)
@@ -153,7 +121,8 @@ var db *mongo.Client
 var tweetdb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50051")
 
@@ -168,13 +137,8 @@ func InitGRPC() {
 
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
-	conn, ch, err := rabbitmq.SetupRabbitMQ()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-	defer ch.Close()
-	srv := &TweetServiceServer{ch: ch}
+
+	srv := &TweetServiceServer{}
 	pbtweet.RegisterTweetServiceServer(s, srv)
 	reflection.Register(s)
 

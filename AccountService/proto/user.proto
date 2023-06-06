@@ -2,7 +2,6 @@ syntax = "proto3";
 package proto;
 option go_package = ".";
 
-import "google/protobuf/timestamp.proto";
 
 message User {
   string UserID = 1;
@@ -20,7 +19,6 @@ message TweetData{
   string Username = 2;
   string TweetID = 3;
   string Body = 4;
-  google.protobuf.Timestamp created = 5;
 }
 
 message UserData{
@@ -49,7 +47,7 @@ message GetAllUsersRes{repeated User user = 1;}
 message UpdateUserReq{User user = 1;}
 message UpdateUserRes{User user = 1;}
 
-message DeleteUserReq{string userid = 1;}
+message DeleteUserReq{string userId = 1;}
 message DeleteUserRes{string status = 1;}
 
 message GetAllUserDataReq{string userid = 1;}

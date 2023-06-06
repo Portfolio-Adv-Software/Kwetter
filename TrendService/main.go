@@ -11,13 +11,17 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	loadEnv()
 
 	go func() {
 		defer wg.Done()
 		ConsumeMessage("tweet_queue", &wg)
+	}()
+	go func() {
+		defer wg.Done()
+		DeleteGDPRUser(&wg)
 	}()
 	go func() {
 		defer wg.Done()

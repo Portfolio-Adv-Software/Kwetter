@@ -2,8 +2,6 @@ syntax = "proto3";
 package proto;
 option go_package = ".";
 
-import "google/protobuf/timestamp.proto";
-
 service TweetService {
   rpc ReturnAll(ReturnAllReq) returns (ReturnAllRes);
   rpc ReturnTweet(ReturnTweetReq) returns (ReturnTweetRes);
@@ -16,7 +14,6 @@ message Tweet{
   string Username = 2;
   string TweetID = 3;
   string Body = 4;
-  google.protobuf.Timestamp created = 5;
 }
 
 //return all tweets
@@ -32,5 +29,5 @@ message PostTweetReq{Tweet tweet = 1;}
 message PostTweetRes{Tweet tweet = 1;}
 
 //Delete data
-message DeleteDataReq{string userid = 1; string correlationId = 2;}
+message DeleteDataReq{string userId = 1;}
 message DeleteDataRes{string status = 1;}
