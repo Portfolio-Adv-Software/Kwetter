@@ -27,8 +27,8 @@ service UserService{
   rpc UpdateUser(UpdateUserReq) returns(UpdateUserRes){
     option (google.api.http) = {patch: "/account/{user.UserID}" body: "*"};
   }
-  rpc DeleteUser(DeleteUserReq) returns(UpdateUserRes){
-    option (google.api.http) = {delete: "/account/{UserID}"};
+  rpc DeleteUser(DeleteUserReq) returns(DeleteUserRes){
+    option (google.api.http) = {delete: "/account/{userId}"};
   }
 }
 
@@ -85,7 +85,7 @@ message UpdateUserRes{User user = 1;}
 
 //DeleteUser
 //should probably delete ALL user data, GDPR
-message DeleteUserReq{string UserID = 1;}
+message DeleteUserReq{string userId = 1;}
 message DeleteUserRes{string status = 1;}
 
 //TrendService

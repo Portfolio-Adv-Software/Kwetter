@@ -1,13 +1,13 @@
 package rabbitmq
 
 import (
-	"encoding/json"
 	"fmt"
 	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 	"log"
 	"sync"
 )
@@ -48,7 +48,7 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	go func() {
 		for d := range deleteMsgs {
 			req := &pbtweet.DeleteDataReq{}
-			err := json.Unmarshal(d.Body, req)
+			err := proto.Unmarshal(d.Body, req)
 			if err != nil {
 				log.Printf("failed to unmarshal delete req: %v", err)
 				continue

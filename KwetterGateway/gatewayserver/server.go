@@ -57,7 +57,7 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserReq
 	return u.UserClient.UpdateUser(ctx, req)
 }
 
-func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.UpdateUserRes, error) {
+func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error) {
 	log.Println("delete user @ gateway")
 	return u.UserClient.DeleteUser(ctx, req)
 }

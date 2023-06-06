@@ -11,7 +11,7 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 
 	loadEnv()
 

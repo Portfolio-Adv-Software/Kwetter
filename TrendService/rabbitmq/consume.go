@@ -5,6 +5,8 @@ import (
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
 	"google.golang.org/protobuf/proto"
 	"log"
+	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
@@ -49,7 +51,8 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	var forever chan struct{}
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for d := range msgs {
@@ -61,13 +64,13 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 			}
 			tweet.Trend = extractHashtags(tweet.Body)
 			log.Printf("received tweet: %v", tweet)
-			c, _ := InitClient()
-			PostTrend(c, tweet)
+			client, _ := InitClient()
+			PostTrend(client, tweet)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+	<-c
 }
 
 func extractHashtags(tweetBody string) []string {

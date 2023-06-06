@@ -26,7 +26,7 @@ type TrendServiceServer struct {
 }
 
 func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteDataReq) (*pbtrend.DeleteDataRes, error) {
-	filter := bson.M{"_id": req.GetUserid()}
+	filter := bson.M{"_id": req.GetUserId()}
 	maxRetries := 3
 	retryCount := 0
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -39,20 +39,6 @@ func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteD
 		}
 
 		if count == 0 {
-			err = t.ch.PublishWithContext(
-				ctx,
-				"",
-				"trend_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
 			res := &pbtrend.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
@@ -61,21 +47,6 @@ func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteD
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			err = t.ch.PublishWithContext(
-				ctx,
-				"",
-				"trend_deletion_ack",
-				false,
-				false,
-				amqp.Publishing{
-					ContentType:   "text/plain",
-					Body:          []byte("ACK"),
-					CorrelationId: req.GetCorrelationId(),
-				})
-			if err != nil {
-				log.Println(err)
-			}
-
 			res := &pbtrend.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}

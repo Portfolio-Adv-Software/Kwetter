@@ -106,6 +106,8 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 }
 
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUserReq) (*pbuser.DeleteUserRes, error) {
+	log.Println("hit deleteuser @accountservice")
+	rabbitmq.SendDeleteGDPRUser(req.GetUserId())
 	filter := bson.M{"userid": req.GetUserId()}
 	log.Printf(req.GetUserId())
 	maxRetries := 3
@@ -132,7 +134,6 @@ func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUse
 		}
 		retryCount++
 	}
-	rabbitmq.SendDeleteGDPRUser(req.GetUserId())
 	res := &pbuser.DeleteUserRes{Status: "User data deleted successfully"}
 	return res, nil
 }

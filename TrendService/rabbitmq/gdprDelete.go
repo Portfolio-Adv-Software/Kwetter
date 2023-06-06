@@ -1,14 +1,16 @@
 package rabbitmq
 
 import (
-	"encoding/json"
 	"fmt"
 	pbtrend "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/proto"
 	"log"
+	"os"
+	"os/signal"
 	"sync"
 )
 
@@ -43,24 +45,25 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	var forever chan struct{}
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for d := range deleteMsgs {
 			req := &pbtrend.DeleteDataReq{}
-			err := json.Unmarshal(d.Body, req)
+			err := proto.Unmarshal(d.Body, req)
 			if err != nil {
 				log.Printf("failed to unmarshal delete req: %v", err)
 				continue
 			}
 			log.Printf("Received a message to delete everything regarding user: %+v", req.GetUserId())
-			c, _ := initClient()
-			deleteData(c, req)
+			client, _ := initClient()
+			deleteData(client, req)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+	<-c
 }
 
 func initClient() (pbtrend.TrendServiceClient, error) {
