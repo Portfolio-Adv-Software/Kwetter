@@ -6,6 +6,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/protobuf/proto"
 	"log"
+	"os"
 	"time"
 )
 
@@ -16,6 +17,7 @@ func failOnError(err error, msg string) {
 }
 
 func ProduceMessage(name string, tweet *pb.Tweet) {
+	rMQUrl := os.Getenv("RMQ_KEY")
 	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()

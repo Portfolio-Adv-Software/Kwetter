@@ -16,9 +16,8 @@ func failOnError(err error, msg string) {
 	}
 }
 
-var rMQUrl = os.Getenv("RMQ_KEY")
-
 func SendDeleteGDPRUser(userid string) {
+	rMQUrl := os.Getenv("RMQ_KEY")
 	queueNames := []string{"delete_auth", "delete_tweet", "delete_trend"}
 	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")

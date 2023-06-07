@@ -8,10 +8,12 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/proto"
 	"log"
+	"os"
 	"sync"
 )
 
 func ConsumeMessage(queue string, wg *sync.WaitGroup) {
+	rMQUrl := os.Getenv("RMQ_KEY")
 	defer wg.Done()
 	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")

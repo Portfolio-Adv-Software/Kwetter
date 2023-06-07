@@ -13,9 +13,8 @@ import (
 	"sync"
 )
 
-var rMQUrl = os.Getenv("RMQ_KEY")
-
 func DeleteGDPRUser(wg *sync.WaitGroup) {
+	rMQUrl := os.Getenv("RMQ_KEY")
 	defer wg.Done()
 	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
