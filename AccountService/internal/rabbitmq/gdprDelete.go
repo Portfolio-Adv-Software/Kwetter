@@ -1,7 +1,7 @@
 package rabbitmq
 
 import (
-	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
+	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/protobuf/proto"

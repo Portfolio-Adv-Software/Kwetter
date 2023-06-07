@@ -1,7 +1,7 @@
 package rabbitmq
 
 import (
-	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -48,7 +48,7 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 
 	go func() {
 		for d := range msgs {
-			user := &pbuser.User{}
+			user := &__.User{}
 			err := proto.Unmarshal(d.Body, user)
 			if err != nil {
 				log.Printf("failed to unmarshal user: %v", err)
@@ -64,18 +64,18 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 	<-forever
 }
 
-func InitClient() pbuser.UserServiceClient {
+func InitClient() __.UserServiceClient {
 	// Set up a gRPC client connection to your backend service
 	conn, err := grpc.Dial(":50054", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect: %s", err)
 	}
-	c := pbuser.NewUserServiceClient(conn)
+	c := __.NewUserServiceClient(conn)
 	return c
 }
 
-func CreateUser(c pbuser.UserServiceClient, user *pbuser.User) *pbuser.User {
-	res, err := c.CreateUser(context.Background(), &pbuser.CreateUserReq{User: user})
+func CreateUser(c __.UserServiceClient, user *__.User) *__.User {
+	res, err := c.CreateUser(context.Background(), &__.CreateUserReq{User: user})
 	if err != nil {
 		return nil
 	}

@@ -2,8 +2,8 @@ package userserver
 
 import (
 	"fmt"
-	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
-	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/rabbitmq"
+	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/internal/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/internal/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,13 +21,13 @@ import (
 )
 
 type UserServiceServer struct {
-	pbuser.UnimplementedUserServiceServer
+	__.UnimplementedUserServiceServer
 }
 
-func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUserReq) (*pbuser.CreateUserRes, error) {
+func (u UserServiceServer) CreateUser(ctx context.Context, req *__.CreateUserReq) (*__.CreateUserRes, error) {
 	data := req.GetUser()
 
-	user := &pbuser.User{
+	user := &__.User{
 		UserID:   data.GetUserID(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
@@ -38,24 +38,24 @@ func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUse
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error inserting account into db: %v", err))
 	}
-	res := &pbuser.CreateUserRes{User: user}
+	res := &__.CreateUserRes{User: user}
 	return res, nil
 }
 
-func (u UserServiceServer) GetUser(ctx context.Context, req *pbuser.GetUserReq) (*pbuser.GetUserRes, error) {
+func (u UserServiceServer) GetUser(ctx context.Context, req *__.GetUserReq) (*__.GetUserRes, error) {
 	userID := req.GetUserid()
-	data := &pbuser.User{}
+	data := &__.User{}
 	err := accountdb.FindOne(ctx, bson.M{"userid": userID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding user: %v", err))
 	}
-	res := &pbuser.GetUserRes{User: data}
+	res := &__.GetUserRes{User: data}
 	return res, nil
 }
 
-func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUserReq) (*pbuser.UpdateUserRes, error) {
+func (u UserServiceServer) UpdateUser(ctx context.Context, req *__.UpdateUserReq) (*__.UpdateUserRes, error) {
 	user := req.GetUser()
-	data := &pbuser.User{}
+	data := &__.User{}
 	update := bson.M{"$set": bson.M{
 		"email":    user.GetEmail(),
 		"password": user.GetPassword(),
@@ -65,17 +65,17 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error updating user: %v", err))
 	}
-	updatedUser := &pbuser.User{
+	updatedUser := &__.User{
 		UserID:   data.GetUserID(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
 		Username: data.GetUsername(),
 	}
-	res := &pbuser.UpdateUserRes{User: updatedUser}
+	res := &__.UpdateUserRes{User: updatedUser}
 	return res, nil
 }
 
-func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUserReq) (*pbuser.DeleteUserRes, error) {
+func (u UserServiceServer) DeleteUser(ctx context.Context, req *__.DeleteUserReq) (*__.DeleteUserRes, error) {
 	rabbitmq.SendDeleteGDPRUser(req.GetUserId())
 	filter := bson.M{"userid": req.GetUserId()}
 	maxRetries := 3
@@ -89,7 +89,7 @@ func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUse
 			return nil, err
 		}
 		if count == 0 {
-			res := &pbuser.DeleteUserRes{Status: "No documents found to delete"}
+			res := &__.DeleteUserRes{Status: "No documents found to delete"}
 			return res, nil
 		}
 		deleteResult, err := accountdb.DeleteMany(ctx, filter)
@@ -97,12 +97,12 @@ func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUse
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			res := &pbuser.DeleteUserRes{Status: "All found documents deleted"}
+			res := &__.DeleteUserRes{Status: "All found documents deleted"}
 			return res, nil
 		}
 		retryCount++
 	}
-	res := &pbuser.DeleteUserRes{Status: "User data deleted successfully"}
+	res := &__.DeleteUserRes{Status: "User data deleted successfully"}
 	return res, nil
 }
 
@@ -130,7 +130,7 @@ func InitGRPC(wg *sync.WaitGroup) {
 	s := grpc.NewServer(opts...)
 	srv := &UserServiceServer{}
 	// Register the service with the server
-	pbuser.RegisterUserServiceServer(s, srv)
+	__.RegisterUserServiceServer(s, srv)
 	reflection.Register(s)
 
 	// Initialize MongoDb client
