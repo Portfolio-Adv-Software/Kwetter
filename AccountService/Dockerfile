@@ -4,8 +4,8 @@ RUN apk update && apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
-RUN go get -d -v ./...
-RUN go mod tidy
+COPY go.mod go.sum ./
+RUN go mod download
 
 COPY . .
 
@@ -13,7 +13,7 @@ ARG TARGET_FILE=main.go
 
 RUN go build -o /account-service ${TARGET_FILE}
 
-FROM alpine
+FROM golang:1.20-alpine
 
 COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
