@@ -31,6 +31,10 @@ jobs:
           echo "MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}" >> .env
           echo "RMQ_KEY"=${{ secrets.RMQ_KEY }} >> .env
 
+      - name: Run Tests
+        working-directory: TrendService
+        run: go test ./...
+
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2
         with:
