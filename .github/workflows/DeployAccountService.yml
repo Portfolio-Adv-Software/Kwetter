@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Tests
         working-directory: AccountService
-        run: go test ./Tests/...
+        run: go test ./internal/Tests/...
 
       - name: Build Account Service
         working-directory: AccountService

@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
-	pbtrend "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -51,7 +51,7 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 
 	go func() {
 		for d := range deleteMsgs {
-			req := &pbtrend.DeleteDataReq{}
+			req := &__.DeleteDataReq{}
 			err := proto.Unmarshal(d.Body, req)
 			if err != nil {
 				log.Printf("failed to unmarshal delete req: %v", err)
@@ -67,17 +67,17 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	<-c
 }
 
-func initClient() (pbtrend.TrendServiceClient, error) {
+func initClient() (__.TrendServiceClient, error) {
 	// Set up a gRPC client connection to your backend service
 	conn, err := grpc.Dial(":50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect: %s", err)
 	}
-	c := pbtrend.NewTrendServiceClient(conn)
+	c := __.NewTrendServiceClient(conn)
 	return c, nil
 }
 
-func deleteData(c pbtrend.TrendServiceClient, req *pbtrend.DeleteDataReq) (*pbtrend.DeleteDataRes, error) {
+func deleteData(c __.TrendServiceClient, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	res, err := c.DeleteData(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call deleteData: %v", err)

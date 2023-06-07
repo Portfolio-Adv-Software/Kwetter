@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"context"
-	pb "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
+	pb "github.com/Portfolio-Adv-Software/Kwetter/TweetService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/protobuf/proto"
 	"log"

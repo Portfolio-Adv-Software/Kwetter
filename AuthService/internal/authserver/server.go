@@ -2,8 +2,8 @@ package authserver
 
 import (
 	"fmt"
-	pbauth "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto"
-	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
+	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/internal/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/internal/rabbitmq"
 	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -24,30 +24,30 @@ import (
 )
 
 type AuthServiceServer struct {
-	pbauth.UnimplementedAuthServiceServer
+	__.UnimplementedAuthServiceServer
 }
 
-func (a AuthServiceServer) GetData(ctx context.Context, req *pbauth.GetDataReq) (*pbauth.GetDataRes, error) {
+func (a AuthServiceServer) GetData(ctx context.Context, req *__.GetDataReq) (*__.GetDataRes, error) {
 	userID, err := primitive.ObjectIDFromHex(req.GetUserId())
 	if err != nil {
 		return nil, err
 	}
-	data := &pbauth.AuthData{}
+	data := &__.AuthData{}
 	err = authdb.FindOne(ctx, bson.M{"_id": userID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding user: %v", err))
 	}
 
-	authData := &pbauth.AuthData{
+	authData := &__.AuthData{
 		Id:       req.GetUserId(),
 		Email:    data.GetEmail(),
 		Password: data.GetPassword(),
 	}
-	res := &pbauth.GetDataRes{AuthData: authData}
+	res := &__.GetDataRes{AuthData: authData}
 	return res, nil
 }
 
-func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
+func (a AuthServiceServer) DeleteData(ctx context.Context, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	objectID, err := primitive.ObjectIDFromHex(req.GetUserId())
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDat
 		}
 
 		if count == 0 {
-			res := &pbauth.DeleteDataRes{Status: "No documents found to delete"}
+			res := &__.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
 		deleteResult, err := authdb.DeleteMany(ctx, filter)
@@ -73,27 +73,27 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDat
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			res := &pbauth.DeleteDataRes{Status: "All found documents deleted"}
+			res := &__.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}
 		retryCount++
 	}
-	res := &pbauth.DeleteDataRes{Status: "Failed to delete records"}
+	res := &__.DeleteDataRes{Status: "Failed to delete records"}
 	return res, nil
 }
 
-func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
+func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
 	if !req.DataPermission {
 		return nil, status.Error(codes.Aborted, "No permission to store data")
 	}
 	data := req.GetEmail()
-	user := &pbauth.AuthData{}
+	user := &__.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
 	if err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "Email is already registered")
 	}
 
-	newUser := &pbauth.RegisterReq{
+	newUser := &__.RegisterReq{
 		Email:          req.GetEmail(),
 		Password:       HashPassword(req.GetPassword()),
 		DataPermission: req.GetDataPermission(),
@@ -109,19 +109,19 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 		return nil, status.Errorf(codes.Internal, "Invalid type for InsertedID")
 	}
 
-	registeredUser := &pbauth.AuthData{
+	registeredUser := &__.AuthData{
 		Id:       insertedID.Hex(),
 		Email:    newUser.GetEmail(),
 		Password: "",
 	}
 	rabbitmq.ProduceMessage("user_queue", registeredUser)
-	return &pbauth.RegisterRes{
+	return &__.RegisterRes{
 		Status: "Registration successful",
 	}, nil
 }
 
-func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pbauth.LoginRes, error) {
-	user := &pbauth.AuthData{}
+func (a AuthServiceServer) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
+	user := &__.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": req.Email}).Decode(user)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Login credentials invalid"))
@@ -131,13 +131,13 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pb
 		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
 	}
 	token, _ := generateJWTToken(user)
-	return &pbauth.LoginRes{
+	return &__.LoginRes{
 		Status: "Login successful",
 		Token:  token,
 	}, nil
 }
 
-func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq) (*pbauth.ValidateRes, error) {
+func (a AuthServiceServer) Validate(ctx context.Context, req *__.ValidateReq) (*__.ValidateRes, error) {
 	tokenString := req.Token
 	// Parse and validate the JWT token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -155,7 +155,7 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq
 
 	// Verify the token is valid
 	if _, ok := token.Claims.(jwt.Claims); !ok || !token.Valid {
-		return &pbauth.ValidateRes{Status: "INVALID"}, nil
+		return &__.ValidateRes{Status: "INVALID"}, nil
 	}
 
 	type User struct {
@@ -170,7 +170,7 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq
 		return nil, fmt.Errorf("failed to find user: %v", err)
 	}
 	// Token is valid
-	return &pbauth.ValidateRes{
+	return &__.ValidateRes{
 		Status: "Token Valid",
 		Userid: user.Id,
 	}, nil
@@ -187,7 +187,7 @@ const (
 	admin
 )
 
-func generateJWTToken(user *pbauth.AuthData) (string, error) {
+func generateJWTToken(user *__.AuthData) (string, error) {
 	claims := jwt.MapClaims{
 		"id":      user.GetId(),
 		"email":   user.GetEmail(),
@@ -233,7 +233,7 @@ func InitGRPC(wg *sync.WaitGroup) {
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
 	srv := &AuthServiceServer{}
-	pbauth.RegisterAuthServiceServer(s, srv)
+	__.RegisterAuthServiceServer(s, srv)
 	reflection.Register(s)
 
 	fmt.Println("Connecting to MongoDB...")

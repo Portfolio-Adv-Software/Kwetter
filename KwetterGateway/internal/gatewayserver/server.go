@@ -3,8 +3,8 @@ package gatewayserver
 import (
 	"bytes"
 	"fmt"
-	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/config"
-	pb "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/internal/config"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/internal/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -24,17 +24,17 @@ import (
 )
 
 type UserDataServiceServer struct {
-	pb.UnimplementedUserDataServiceServer
-	AuthClient  pb.AuthServiceClient
-	UserClient  pb.UserServiceClient
-	TweetClient pb.TweetServiceClient
+	__.UnimplementedUserDataServiceServer
+	AuthClient  __.AuthServiceClient
+	UserClient  __.UserServiceClient
+	TweetClient __.TweetServiceClient
 }
 
-func (u UserDataServiceServer) GetAllUserData(ctx context.Context, req *pb.GetAllUserDataReq) (*pb.GetAllUserDataRes, error) {
+func (u UserDataServiceServer) GetAllUserData(ctx context.Context, req *__.GetAllUserDataReq) (*__.GetAllUserDataRes, error) {
 	userId := req.GetUserId()
-	authReq := &pb.GetDataReq{UserId: userId}
-	userReq := &pb.GetUserReq{UserID: userId}
-	tweetReq := &pb.ReturnAllReq{UserId: userId}
+	authReq := &__.GetDataReq{UserId: userId}
+	userReq := &__.GetUserReq{UserID: userId}
+	tweetReq := &__.ReturnAllReq{UserId: userId}
 	authRes, err := u.AuthClient.GetData(ctx, authReq)
 	if err != nil {
 		return nil, err
@@ -47,63 +47,63 @@ func (u UserDataServiceServer) GetAllUserData(ctx context.Context, req *pb.GetAl
 	if err != nil {
 		return nil, err
 	}
-	res := &pb.AllUserData{
+	res := &__.AllUserData{
 		User:      userRes.GetUser(),
 		AuthData:  authRes.GetAuthData(),
 		TweetData: tweetRes.GetTweetData(),
 	}
-	return &pb.GetAllUserDataRes{AllUserData: res}, nil
+	return &__.GetAllUserDataRes{AllUserData: res}, nil
 }
 
 type AuthServiceServer struct {
-	pb.UnimplementedAuthServiceServer
-	AuthClient pb.AuthServiceClient
+	__.UnimplementedAuthServiceServer
+	AuthClient __.AuthServiceClient
 }
 
-func (a AuthServiceServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
+func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
 	return a.AuthClient.Register(ctx, req)
 }
 
-func (a AuthServiceServer) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error) {
+func (a AuthServiceServer) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
 	return a.AuthClient.Login(ctx, req)
 }
 
-func (a AuthServiceServer) Validate(ctx context.Context, req *pb.ValidateReq) (*pb.ValidateRes, error) {
+func (a AuthServiceServer) Validate(ctx context.Context, req *__.ValidateReq) (*__.ValidateRes, error) {
 	return a.AuthClient.Validate(ctx, req)
 }
 
 type UserServiceServer struct {
-	pb.UnimplementedUserServiceServer
-	UserClient pb.UserServiceClient
+	__.UnimplementedUserServiceServer
+	UserClient __.UserServiceClient
 }
 
-func (u UserServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
+func (u UserServiceServer) UpdateUser(ctx context.Context, req *__.UpdateUserReq) (*__.UpdateUserRes, error) {
 	return u.UserClient.UpdateUser(ctx, req)
 }
 
-func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error) {
+func (u UserServiceServer) DeleteUser(ctx context.Context, req *__.DeleteUserReq) (*__.DeleteUserRes, error) {
 	return u.UserClient.DeleteUser(ctx, req)
 }
 
 type TrendServiceServer struct {
-	pb.UnimplementedTrendServiceServer
-	TrendClient pb.TrendServiceClient
+	__.UnimplementedTrendServiceServer
+	TrendClient __.TrendServiceClient
 }
 
-func (t TrendServiceServer) GetTrend(ctx context.Context, req *pb.GetTrendReq) (*pb.GetTrendRes, error) {
+func (t TrendServiceServer) GetTrend(ctx context.Context, req *__.GetTrendReq) (*__.GetTrendRes, error) {
 	return t.TrendClient.GetTrend(ctx, req)
 }
 
 type TweetServiceServer struct {
-	pb.UnimplementedTweetServiceServer
-	TweetClient pb.TweetServiceClient
+	__.UnimplementedTweetServiceServer
+	TweetClient __.TweetServiceClient
 }
 
-func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pb.ReturnTweetReq) (*pb.ReturnTweetRes, error) {
+func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *__.ReturnTweetReq) (*__.ReturnTweetRes, error) {
 	return t.TweetClient.ReturnTweet(ctx, req)
 }
 
-func (t TweetServiceServer) PostTweet(ctx context.Context, req *pb.PostTweetReq) (*pb.PostTweetRes, error) {
+func (t TweetServiceServer) PostTweet(ctx context.Context, req *__.PostTweetReq) (*__.PostTweetRes, error) {
 	return t.TweetClient.PostTweet(ctx, req)
 }
 
@@ -185,16 +185,16 @@ func registerUserDataService(s *grpc.Server, ctx context.Context, mux *runtime.S
 	if err != nil {
 		log.Fatalf("failed to dial tweetservice: %v", err)
 	}
-	authClient := pb.NewAuthServiceClient(authConn)
-	userClient := pb.NewUserServiceClient(userConn)
-	tweetClient := pb.NewTweetServiceClient(tweetConn)
+	authClient := __.NewAuthServiceClient(authConn)
+	userClient := __.NewUserServiceClient(userConn)
+	tweetClient := __.NewTweetServiceClient(tweetConn)
 	userDataServer := &UserDataServiceServer{
 		AuthClient:  authClient,
 		UserClient:  userClient,
 		TweetClient: tweetClient,
 	}
-	pb.RegisterUserDataServiceServer(s, userDataServer)
-	err = pb.RegisterUserDataServiceHandlerServer(ctx, mux, userDataServer)
+	__.RegisterUserDataServiceServer(s, userDataServer)
+	err = __.RegisterUserDataServiceHandlerServer(ctx, mux, userDataServer)
 	if err != nil {
 		log.Fatalf("failed to register UserDataService handler: %v", err)
 	}
@@ -204,10 +204,10 @@ func registerAuthService(s *grpc.Server, ctx context.Context, mux *runtime.Serve
 	if err != nil {
 		log.Fatalf("failed to dial authservice: %v", err)
 	}
-	authClient := pb.NewAuthServiceClient(authConn)
+	authClient := __.NewAuthServiceClient(authConn)
 	authServer := &AuthServiceServer{AuthClient: authClient}
-	pb.RegisterAuthServiceServer(s, authServer)
-	err = pb.RegisterAuthServiceHandlerServer(ctx, mux, authServer)
+	__.RegisterAuthServiceServer(s, authServer)
+	err = __.RegisterAuthServiceHandlerServer(ctx, mux, authServer)
 	if err != nil {
 		log.Fatalf("failed to register authservice handler: %v", err)
 	}
@@ -217,10 +217,10 @@ func registerUserService(s *grpc.Server, ctx context.Context, mux *runtime.Serve
 	if err != nil {
 		log.Fatalf("failed to dial userservice: %v", err)
 	}
-	userClient := pb.NewUserServiceClient(userConn)
+	userClient := __.NewUserServiceClient(userConn)
 	userServer := &UserServiceServer{UserClient: userClient}
-	pb.RegisterUserServiceServer(s, userServer)
-	err = pb.RegisterUserServiceHandlerServer(ctx, mux, userServer)
+	__.RegisterUserServiceServer(s, userServer)
+	err = __.RegisterUserServiceHandlerServer(ctx, mux, userServer)
 	if err != nil {
 		log.Fatalf("failed to register userservice handler: %v", err)
 	}
@@ -230,10 +230,10 @@ func registerTrendService(s *grpc.Server, ctx context.Context, mux *runtime.Serv
 	if err != nil {
 		log.Fatalf("failed to dial trendservice: %v", err)
 	}
-	trendClient := pb.NewTrendServiceClient(trendConn)
+	trendClient := __.NewTrendServiceClient(trendConn)
 	trendServer := &TrendServiceServer{TrendClient: trendClient}
-	pb.RegisterTrendServiceServer(s, trendServer)
-	err = pb.RegisterTrendServiceHandlerServer(ctx, mux, trendServer)
+	__.RegisterTrendServiceServer(s, trendServer)
+	err = __.RegisterTrendServiceHandlerServer(ctx, mux, trendServer)
 	if err != nil {
 		log.Fatalf("failed to register trendservice handler: %v", err)
 	}
@@ -243,10 +243,10 @@ func registerTweetService(s *grpc.Server, ctx context.Context, mux *runtime.Serv
 	if err != nil {
 		log.Fatalf("failed to dial tweetservice: %v", err)
 	}
-	tweetClient := pb.NewTweetServiceClient(tweetConn)
+	tweetClient := __.NewTweetServiceClient(tweetConn)
 	tweetServer := &TweetServiceServer{TweetClient: tweetClient}
-	pb.RegisterTweetServiceServer(s, tweetServer)
-	err = pb.RegisterTweetServiceHandlerServer(ctx, mux, tweetServer)
+	__.RegisterTweetServiceServer(s, tweetServer)
+	err = __.RegisterTweetServiceHandlerServer(ctx, mux, tweetServer)
 	if err != nil {
 		log.Fatalf("failed to register tweetservice handler: %v", err)
 	}
@@ -272,14 +272,14 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	if err != nil || token.GetToken() == "" {
 		return nil, err
 	}
-	validateReq := &pb.ValidateReq{Token: token.GetToken()}
+	validateReq := &__.ValidateReq{Token: token.GetToken()}
 
 	AuthServiceAddr := config.Config.AuthServiceAddr
 	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to dial authservice: %v", err)
 	}
-	authClient := pb.NewAuthServiceClient(authConn)
+	authClient := __.NewAuthServiceClient(authConn)
 	server := &AuthServiceServer{AuthClient: authClient}
 	validateRes, err := server.AuthClient.Validate(ctx, validateReq)
 	if err != nil {
@@ -289,17 +289,17 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	log.Printf(validateReq.Token)
 
 	if info.FullMethod == "/proto.TweetService/PostTweet" {
-		tweetReq, ok := req.(*pb.PostTweetReq)
+		tweetReq, ok := req.(*__.PostTweetReq)
 		if !ok {
 			log.Println("Invalid request type for PostTweet")
 		}
 		tweetValue := tweetReq.GetTweet()
-		validatedTweet := &pb.Tweet{
+		validatedTweet := &__.Tweet{
 			UserID:   validateRes.GetUserid(),
 			Username: tweetValue.GetUsername(),
 			Body:     tweetValue.GetBody(),
 		}
-		req = &pb.PostTweetReq{Tweet: validatedTweet}
+		req = &__.PostTweetReq{Tweet: validatedTweet}
 	}
 
 	// Invoke the RPC method
@@ -311,7 +311,7 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	return resp, err
 }
 
-func extractToken(ctx context.Context) (token *pb.ValidateReq, err error) {
+func extractToken(ctx context.Context) (token *__.ValidateReq, err error) {
 	log.Println("extracting token")
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -325,7 +325,7 @@ func extractToken(ctx context.Context) (token *pb.ValidateReq, err error) {
 	if tokenString == authHeaders[0] {
 		return nil, status.Error(codes.Unauthenticated, "Invalid token format")
 	}
-	token = &pb.ValidateReq{Token: tokenString}
+	token = &__.ValidateReq{Token: tokenString}
 	log.Println(tokenString)
 	return token, nil
 }

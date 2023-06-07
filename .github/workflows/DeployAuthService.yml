@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Tests
         working-directory: AuthService
-        run: go test ./Tests/...
+        run: go test ./internal/Tests/...
 
       - name: Build Auth Service
         working-directory: AuthService

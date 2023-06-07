@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	. "github.com/Portfolio-Adv-Software/Kwetter/AuthService/authserver"
-	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
+	. "github.com/Portfolio-Adv-Software/Kwetter/AuthService/internal/authserver"
+	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/internal/rabbitmq"
 	"github.com/joho/godotenv"
 	"log"
 	"sync"

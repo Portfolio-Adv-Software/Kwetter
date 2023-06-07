@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/rabbitmq"
-	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
+	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/rabbitmq"
+	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/trendserver"
 	"github.com/joho/godotenv"
 	"log"
 	"sync"

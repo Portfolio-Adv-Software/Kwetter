@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Tests
         working-directory: TrendService
-        run: go test ./Tests/...
+        run: go test ./internal/Tests/...
 
       - name: Push to Docker Hub
         uses: docker/build-push-action@v2

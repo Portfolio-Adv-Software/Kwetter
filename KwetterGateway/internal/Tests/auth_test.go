@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/internal/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
@@ -12,7 +13,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	pb "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/proto"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,7 +21,7 @@ import (
 )
 
 type AuthServiceServerMock struct {
-	pb.UnimplementedAuthServiceServer
+	__.UnimplementedAuthServiceServer
 }
 
 type LoginMock struct {
@@ -29,7 +29,7 @@ type LoginMock struct {
 	Password string
 }
 
-func (m *AuthServiceServerMock) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
+func (m *AuthServiceServerMock) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
 	if req.Email == "existing@example.com" {
 		return nil, status.Errorf(codes.AlreadyExists, "Email is already registered")
 	}
@@ -38,12 +38,12 @@ func (m *AuthServiceServerMock) Register(ctx context.Context, req *pb.RegisterRe
 	insertedUserID := primitive.NewObjectID()
 	fmt.Println("Created user with id: " + insertedUserID.Hex())
 
-	return &pb.RegisterRes{
+	return &__.RegisterRes{
 		Status: "Registration successful",
 	}, nil
 }
 
-func (m *AuthServiceServerMock) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error) {
+func (m *AuthServiceServerMock) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
 	if req.GetEmail() == "nonexisting@example.com" {
 		return nil, status.Errorf(codes.NotFound, "User with that email not found")
 	}
@@ -57,7 +57,7 @@ func (m *AuthServiceServerMock) Login(ctx context.Context, req *pb.LoginReq) (*p
 
 	token := "generated_token"
 
-	return &pb.LoginRes{
+	return &__.LoginRes{
 		Status:      "Login successful",
 		AccessToken: token,
 	}, nil
@@ -71,7 +71,7 @@ func TestRegister(t *testing.T) {
 	authServer := &AuthServiceServerMock{}
 
 	// Register the AuthServiceServerMock as the gRPC server implementation
-	pb.RegisterAuthServiceServer(testServer, authServer)
+	__.RegisterAuthServiceServer(testServer, authServer)
 
 	// Start the test server in a separate goroutine
 	lis, err := net.Listen("tcp", ":0")
@@ -92,7 +92,7 @@ func TestRegister(t *testing.T) {
 	defer conn.Close()
 
 	// Create an instance of the AuthServiceClient using the test server connection
-	authClient := pb.NewAuthServiceClient(conn)
+	authClient := __.NewAuthServiceClient(conn)
 
 	// Create a new Gin router
 	router := gin.Default()
@@ -100,7 +100,7 @@ func TestRegister(t *testing.T) {
 	// Register the register route
 	router.POST("/register", func(c *gin.Context) {
 		// Convert the HTTP request body to a RegisterReq protobuf message
-		var req pb.RegisterReq
+		var req __.RegisterReq
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -120,7 +120,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("successful registration", func(t *testing.T) {
 		// Create a test request body with unique registration details
-		body := &pb.RegisterReq{
+		body := &__.RegisterReq{
 			Email:          "test@example.com",
 			Password:       "password",
 			DataPermission: true,
@@ -141,7 +141,7 @@ func TestRegister(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		// Parse the response body into a RegisterRes protobuf message
-		var registerRes pb.RegisterRes
+		var registerRes __.RegisterRes
 		if err := json.Unmarshal(res.Body.Bytes(), &registerRes); err != nil {
 			t.Fatalf("failed to unmarshal response: %v", err)
 		}
@@ -152,7 +152,7 @@ func TestRegister(t *testing.T) {
 
 	t.Run("duplicate registration", func(t *testing.T) {
 		// Create a test request body with duplicate registration details
-		body := &pb.RegisterReq{
+		body := &__.RegisterReq{
 			Email:          "existing@example.com",
 			Password:       "password",
 			DataPermission: true,
@@ -193,7 +193,7 @@ func TestLogin(t *testing.T) {
 	authServer := &AuthServiceServerMock{}
 
 	// Register the AuthServiceServerMock as the gRPC server implementation
-	pb.RegisterAuthServiceServer(testServer, authServer)
+	__.RegisterAuthServiceServer(testServer, authServer)
 
 	// Start the test server in a separate goroutine
 	lis, err := net.Listen("tcp", ":0")
@@ -214,7 +214,7 @@ func TestLogin(t *testing.T) {
 	defer conn.Close()
 
 	// Create an instance of the AuthServiceClient using the test server connection
-	authClient := pb.NewAuthServiceClient(conn)
+	authClient := __.NewAuthServiceClient(conn)
 
 	// Create a new Gin router
 	router := gin.Default()
@@ -222,7 +222,7 @@ func TestLogin(t *testing.T) {
 	// Register the login route
 	router.POST("/login", func(c *gin.Context) {
 		// Convert the HTTP request body to a LoginReq protobuf message
-		var req pb.LoginReq
+		var req __.LoginReq
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -242,7 +242,7 @@ func TestLogin(t *testing.T) {
 
 	t.Run("successful login", func(t *testing.T) {
 		// Create a test request body with valid login details
-		body := &pb.LoginReq{
+		body := &__.LoginReq{
 			Email:    "user@example.com",
 			Password: "password",
 		}
@@ -262,7 +262,7 @@ func TestLogin(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.Code)
 
 		// Parse the response body into a LoginRes protobuf message
-		var loginRes pb.LoginRes
+		var loginRes __.LoginRes
 		if err := json.Unmarshal(res.Body.Bytes(), &loginRes); err != nil {
 			t.Fatalf("failed to unmarshal response: %v", err)
 		}
@@ -273,7 +273,7 @@ func TestLogin(t *testing.T) {
 
 	t.Run("invalid login", func(t *testing.T) {
 		// Create a test request body with invalid login details
-		body := &pb.LoginReq{
+		body := &__.LoginReq{
 			Email:    "nonexisting@example.com",
 			Password: "password",
 		}

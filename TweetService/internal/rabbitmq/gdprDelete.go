@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
-	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -50,7 +50,7 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	go func() {
 		for d := range deleteMsgs {
 			fmt.Printf("Message Body: %s\n", string(d.Body))
-			req := &pbtweet.DeleteDataReq{}
+			req := &__.DeleteDataReq{}
 			err := proto.Unmarshal(d.Body, req)
 			if err != nil {
 				log.Printf("failed to unmarshal delete req: %v", err)
@@ -66,17 +66,17 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	<-forever
 }
 
-func InitClient() (pbtweet.TweetServiceClient, error) {
+func InitClient() (__.TweetServiceClient, error) {
 	// Set up a gRPC client connection to your backend service
 	conn, err := grpc.Dial(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect: %s", err)
 	}
-	c := pbtweet.NewTweetServiceClient(conn)
+	c := __.NewTweetServiceClient(conn)
 	return c, nil
 }
 
-func deleteData(c pbtweet.TweetServiceClient, req *pbtweet.DeleteDataReq) (*pbtweet.DeleteDataRes, error) {
+func deleteData(c __.TweetServiceClient, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	res, err := c.DeleteData(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call deleteData: %v", err)

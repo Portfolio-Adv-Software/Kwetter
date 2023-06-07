@@ -3,8 +3,8 @@ package tweetserver
 import (
 	"context"
 	"fmt"
-	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TweetService/proto"
-	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/rabbitmq"
+	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/internal/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/TweetService/internal/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -22,10 +22,10 @@ import (
 )
 
 type TweetServiceServer struct {
-	pbtweet.UnimplementedTweetServiceServer
+	__.UnimplementedTweetServiceServer
 }
 
-func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteDataReq) (*pbtweet.DeleteDataRes, error) {
+func (t TweetServiceServer) DeleteData(ctx context.Context, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	filter := bson.M{"userid": req.GetUserId()}
 	maxRetries := 3
 	retryCount := 0
@@ -38,7 +38,7 @@ func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteD
 			return nil, err
 		}
 		if count == 0 {
-			res := &pbtweet.DeleteDataRes{Status: "No documents found to delete"}
+			res := &__.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
 		deleteResult, err := tweetdb.DeleteMany(ctx, filter)
@@ -46,54 +46,54 @@ func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteD
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			res := &pbtweet.DeleteDataRes{Status: "All found documents deleted"}
+			res := &__.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}
 		retryCount++
 	}
-	res := &pbtweet.DeleteDataRes{Status: "Failed to delete records"}
+	res := &__.DeleteDataRes{Status: "Failed to delete records"}
 	return res, nil
 }
 
-func (t TweetServiceServer) ReturnAll(ctx context.Context, req *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
+func (t TweetServiceServer) ReturnAll(ctx context.Context, req *__.ReturnAllReq) (*__.ReturnAllRes, error) {
 	cursor, err := tweetdb.Find(ctx, bson.M{"userid": req.GetUserId()})
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Error finding tweets: %v", err))
 	}
 	defer cursor.Close(ctx)
-	var tweets []*pbtweet.Tweet
+	var tweets []*__.Tweet
 	for cursor.Next(ctx) {
-		data := &pbtweet.Tweet{}
+		data := &__.Tweet{}
 		err := cursor.Decode(data)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, fmt.Sprintf("error decoding data: %v", err))
 		}
 		tweets = append(tweets, data)
 	}
-	res := &pbtweet.ReturnAllRes{Tweet: tweets}
+	res := &__.ReturnAllRes{Tweet: tweets}
 	return res, nil
 }
 
-func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
+func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *__.ReturnTweetReq) (*__.ReturnTweetRes, error) {
 	tweetID := req.GetTweetID()
-	data := &pbtweet.Tweet{}
+	data := &__.Tweet{}
 	err := tweetdb.FindOne(ctx, bson.M{"_id": tweetID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
 	}
-	tweet := &pbtweet.Tweet{
+	tweet := &__.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
 		Body:     data.Body,
 	}
-	res := &pbtweet.ReturnTweetRes{Tweet: tweet}
+	res := &__.ReturnTweetRes{Tweet: tweet}
 	return res, nil
 }
 
-func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTweetReq) (*pbtweet.PostTweetRes, error) {
+func (t TweetServiceServer) PostTweet(ctx context.Context, req *__.PostTweetReq) (*__.PostTweetRes, error) {
 	data := req.GetTweet()
 
-	tweet := &pbtweet.Tweet{
+	tweet := &__.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
 		Body:     data.Body,
@@ -110,7 +110,7 @@ func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTwee
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error inserting tweet into db: %v", err))
 	}
-	res := &pbtweet.PostTweetRes{Tweet: tweet}
+	res := &__.PostTweetRes{Tweet: tweet}
 	return res, nil
 }
 
@@ -136,7 +136,7 @@ func InitGRPC(wg *sync.WaitGroup) {
 	s := grpc.NewServer(opts...)
 
 	srv := &TweetServiceServer{}
-	pbtweet.RegisterTweetServiceServer(s, srv)
+	__.RegisterTweetServiceServer(s, srv)
 	reflection.Register(s)
 
 	fmt.Println("Connecting to MongoDB...")

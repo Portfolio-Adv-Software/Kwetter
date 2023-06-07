@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"fmt"
-	pbauth "github.com/Portfolio-Adv-Software/Kwetter/AuthService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -49,7 +49,7 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 
 	go func() {
 		for d := range deleteMsgs {
-			req := &pbauth.DeleteDataReq{}
+			req := &__.DeleteDataReq{}
 			err := proto.Unmarshal(d.Body, req)
 			if err != nil {
 				log.Printf("failed to unmarshal delete req: %v", err)
@@ -65,17 +65,17 @@ func DeleteGDPRUser(wg *sync.WaitGroup) {
 	<-forever
 }
 
-func initClient() (pbauth.AuthServiceClient, error) {
+func initClient() (__.AuthServiceClient, error) {
 	// Set up a gRPC client connection to your backend service
 	conn, err := grpc.Dial(":50053", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("could not connect: %s", err)
 	}
-	c := pbauth.NewAuthServiceClient(conn)
+	c := __.NewAuthServiceClient(conn)
 	return c, nil
 }
 
-func deleteData(c pbauth.AuthServiceClient, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
+func deleteData(c __.AuthServiceClient, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	res, err := c.DeleteData(context.Background(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call deleteData: %v", err)

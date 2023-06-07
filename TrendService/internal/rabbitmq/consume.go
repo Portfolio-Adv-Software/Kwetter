@@ -1,8 +1,8 @@
 package rabbitmq
 
 import (
-	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
-	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
+	pbtweet "github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/proto"
+	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/trendserver"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"os"

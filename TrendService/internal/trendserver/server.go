@@ -3,7 +3,7 @@ package trendserver
 import (
 	"context"
 	"fmt"
-	pbtrend "github.com/Portfolio-Adv-Software/Kwetter/TrendService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/TrendService/internal/proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,11 +21,11 @@ import (
 )
 
 type TrendServiceServer struct {
-	pbtrend.UnimplementedTrendServiceServer
+	__.UnimplementedTrendServiceServer
 	ch *amqp.Channel
 }
 
-func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteDataReq) (*pbtrend.DeleteDataRes, error) {
+func (t TrendServiceServer) DeleteData(ctx context.Context, req *__.DeleteDataReq) (*__.DeleteDataRes, error) {
 	filter := bson.M{"userid": req.GetUserId()}
 	maxRetries := 3
 	retryCount := 0
@@ -39,7 +39,7 @@ func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteD
 		}
 
 		if count == 0 {
-			res := &pbtrend.DeleteDataRes{Status: "No documents found to delete"}
+			res := &__.DeleteDataRes{Status: "No documents found to delete"}
 			return res, nil
 		}
 		deleteResult, err := trenddb.DeleteMany(ctx, filter)
@@ -47,24 +47,24 @@ func (t TrendServiceServer) DeleteData(ctx context.Context, req *pbtrend.DeleteD
 			return nil, err
 		}
 		if deleteResult.DeletedCount == count {
-			res := &pbtrend.DeleteDataRes{Status: "All found documents deleted"}
+			res := &__.DeleteDataRes{Status: "All found documents deleted"}
 			return res, nil
 		}
 		retryCount++
 	}
-	res := &pbtrend.DeleteDataRes{Status: "Failed to delete records"}
+	res := &__.DeleteDataRes{Status: "Failed to delete records"}
 	return res, nil
 }
 
-func (t TrendServiceServer) GetTrend(ctx context.Context, req *pbtrend.GetTrendReq) (*pbtrend.GetTrendRes, error) {
+func (t TrendServiceServer) GetTrend(ctx context.Context, req *__.GetTrendReq) (*__.GetTrendRes, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTrendReq) (*pbtrend.PostTrendRes, error) {
+func (t TrendServiceServer) PostTrend(ctx context.Context, req *__.PostTrendReq) (*__.PostTrendRes, error) {
 	data := req.GetTweet()
 
-	tweet := &pbtrend.Tweet{
+	tweet := &__.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
 		Body:     data.Body,
@@ -75,7 +75,7 @@ func (t TrendServiceServer) PostTrend(ctx context.Context, req *pbtrend.PostTren
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error inserting tweet into db: %v", err))
 	}
-	res := &pbtrend.PostTrendRes{Tweet: tweet}
+	res := &__.PostTrendRes{Tweet: tweet}
 	return res, nil
 }
 
@@ -103,7 +103,7 @@ func InitGRPC(wg *sync.WaitGroup) {
 	s := grpc.NewServer(opts...)
 	srv := &TrendServiceServer{}
 	// Register the service with the server
-	pbtrend.RegisterTrendServiceServer(s, srv)
+	__.RegisterTrendServiceServer(s, srv)
 	reflection.Register(s)
 
 	// Initialize MongoDb client

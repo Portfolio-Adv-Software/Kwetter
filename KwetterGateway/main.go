@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/config"
-	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/gatewayserver"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/internal/config"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/internal/gatewayserver"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"sync"
 )
