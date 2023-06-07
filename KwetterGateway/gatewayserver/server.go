@@ -270,7 +270,7 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 
 	token, err := extractToken(ctx)
 	if err != nil || token.GetToken() == "" {
-		return nil, status.Errorf(codes.Unauthenticated, "Invalid token")
+		return nil, err
 	}
 	validateReq := &pb.ValidateReq{Token: token.GetToken()}
 
@@ -283,7 +283,7 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	server := &AuthServiceServer{AuthClient: authClient}
 	validateRes, err := server.AuthClient.Validate(ctx, validateReq)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "failed to validate token: %v", err)
+		return nil, err
 	}
 	log.Printf("Validation response: %v", validateRes)
 	log.Printf(validateReq.Token)
@@ -306,7 +306,7 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	resp, err := handler(ctx, req)
 	if err != nil {
 		log.Println(err)
-		return nil, status.Error(codes.Unknown, "Token validation failed")
+		return nil, status.Error(codes.Unknown, "Something went wrong")
 	}
 	return resp, err
 }
