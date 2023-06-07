@@ -19,9 +19,100 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	UserDataService_GetAllUserData_FullMethodName = "/proto.UserDataService/GetAllUserData"
+)
+
+// UserDataServiceClient is the client API for UserDataService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type UserDataServiceClient interface {
+	GetAllUserData(ctx context.Context, in *GetAllUserDataReq, opts ...grpc.CallOption) (*GetAllUserDataRes, error)
+}
+
+type userDataServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewUserDataServiceClient(cc grpc.ClientConnInterface) UserDataServiceClient {
+	return &userDataServiceClient{cc}
+}
+
+func (c *userDataServiceClient) GetAllUserData(ctx context.Context, in *GetAllUserDataReq, opts ...grpc.CallOption) (*GetAllUserDataRes, error) {
+	out := new(GetAllUserDataRes)
+	err := c.cc.Invoke(ctx, UserDataService_GetAllUserData_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UserDataServiceServer is the server API for UserDataService service.
+// All implementations must embed UnimplementedUserDataServiceServer
+// for forward compatibility
+type UserDataServiceServer interface {
+	GetAllUserData(context.Context, *GetAllUserDataReq) (*GetAllUserDataRes, error)
+	mustEmbedUnimplementedUserDataServiceServer()
+}
+
+// UnimplementedUserDataServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedUserDataServiceServer struct {
+}
+
+func (UnimplementedUserDataServiceServer) GetAllUserData(context.Context, *GetAllUserDataReq) (*GetAllUserDataRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllUserData not implemented")
+}
+func (UnimplementedUserDataServiceServer) mustEmbedUnimplementedUserDataServiceServer() {}
+
+// UnsafeUserDataServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserDataServiceServer will
+// result in compilation errors.
+type UnsafeUserDataServiceServer interface {
+	mustEmbedUnimplementedUserDataServiceServer()
+}
+
+func RegisterUserDataServiceServer(s grpc.ServiceRegistrar, srv UserDataServiceServer) {
+	s.RegisterService(&UserDataService_ServiceDesc, srv)
+}
+
+func _UserDataService_GetAllUserData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAllUserDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserDataServiceServer).GetAllUserData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserDataService_GetAllUserData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserDataServiceServer).GetAllUserData(ctx, req.(*GetAllUserDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// UserDataService_ServiceDesc is the grpc.ServiceDesc for UserDataService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UserDataService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.UserDataService",
+	HandlerType: (*UserDataServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetAllUserData",
+			Handler:    _UserDataService_GetAllUserData_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "gateway.proto",
+}
+
+const (
 	AuthService_Register_FullMethodName = "/proto.AuthService/Register"
 	AuthService_Login_FullMethodName    = "/proto.AuthService/Login"
 	AuthService_Validate_FullMethodName = "/proto.AuthService/Validate"
+	AuthService_GetData_FullMethodName  = "/proto.AuthService/GetData"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -31,6 +122,7 @@ type AuthServiceClient interface {
 	Register(ctx context.Context, in *RegisterReq, opts ...grpc.CallOption) (*RegisterRes, error)
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginRes, error)
 	Validate(ctx context.Context, in *ValidateReq, opts ...grpc.CallOption) (*ValidateRes, error)
+	GetData(ctx context.Context, in *GetDataReq, opts ...grpc.CallOption) (*GetDataRes, error)
 }
 
 type authServiceClient struct {
@@ -68,6 +160,15 @@ func (c *authServiceClient) Validate(ctx context.Context, in *ValidateReq, opts 
 	return out, nil
 }
 
+func (c *authServiceClient) GetData(ctx context.Context, in *GetDataReq, opts ...grpc.CallOption) (*GetDataRes, error) {
+	out := new(GetDataRes)
+	err := c.cc.Invoke(ctx, AuthService_GetData_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -75,6 +176,7 @@ type AuthServiceServer interface {
 	Register(context.Context, *RegisterReq) (*RegisterRes, error)
 	Login(context.Context, *LoginReq) (*LoginRes, error)
 	Validate(context.Context, *ValidateReq) (*ValidateRes, error)
+	GetData(context.Context, *GetDataReq) (*GetDataRes, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -90,6 +192,9 @@ func (UnimplementedAuthServiceServer) Login(context.Context, *LoginReq) (*LoginR
 }
 func (UnimplementedAuthServiceServer) Validate(context.Context, *ValidateReq) (*ValidateRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Validate not implemented")
+}
+func (UnimplementedAuthServiceServer) GetData(context.Context, *GetDataReq) (*GetDataRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetData not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -158,6 +263,24 @@ func _AuthService_Validate_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_GetData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetData(ctx, req.(*GetDataReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -177,26 +300,28 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "Validate",
 			Handler:    _AuthService_Validate_Handler,
 		},
+		{
+			MethodName: "GetData",
+			Handler:    _AuthService_GetData_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gateway.proto",
 }
 
 const (
-	UserService_GetUser_FullMethodName     = "/proto.UserService/GetUser"
-	UserService_GetAllUsers_FullMethodName = "/proto.UserService/GetAllUsers"
-	UserService_UpdateUser_FullMethodName  = "/proto.UserService/UpdateUser"
-	UserService_DeleteUser_FullMethodName  = "/proto.UserService/DeleteUser"
+	UserService_UpdateUser_FullMethodName = "/proto.UserService/UpdateUser"
+	UserService_DeleteUser_FullMethodName = "/proto.UserService/DeleteUser"
+	UserService_GetUser_FullMethodName    = "/proto.UserService/GetUser"
 )
 
 // UserServiceClient is the client API for UserService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type UserServiceClient interface {
-	GetUser(ctx context.Context, in *GetUserReq, opts ...grpc.CallOption) (*GetUserRes, error)
-	GetAllUsers(ctx context.Context, in *GetAllUsersReq, opts ...grpc.CallOption) (*GetAllUsersRes, error)
 	UpdateUser(ctx context.Context, in *UpdateUserReq, opts ...grpc.CallOption) (*UpdateUserRes, error)
 	DeleteUser(ctx context.Context, in *DeleteUserReq, opts ...grpc.CallOption) (*DeleteUserRes, error)
+	GetUser(ctx context.Context, in *GetUserReq, opts ...grpc.CallOption) (*GetUserRes, error)
 }
 
 type userServiceClient struct {
@@ -205,24 +330,6 @@ type userServiceClient struct {
 
 func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
 	return &userServiceClient{cc}
-}
-
-func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserReq, opts ...grpc.CallOption) (*GetUserRes, error) {
-	out := new(GetUserRes)
-	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *userServiceClient) GetAllUsers(ctx context.Context, in *GetAllUsersReq, opts ...grpc.CallOption) (*GetAllUsersRes, error) {
-	out := new(GetAllUsersRes)
-	err := c.cc.Invoke(ctx, UserService_GetAllUsers_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *userServiceClient) UpdateUser(ctx context.Context, in *UpdateUserReq, opts ...grpc.CallOption) (*UpdateUserRes, error) {
@@ -243,14 +350,22 @@ func (c *userServiceClient) DeleteUser(ctx context.Context, in *DeleteUserReq, o
 	return out, nil
 }
 
+func (c *userServiceClient) GetUser(ctx context.Context, in *GetUserReq, opts ...grpc.CallOption) (*GetUserRes, error) {
+	out := new(GetUserRes)
+	err := c.cc.Invoke(ctx, UserService_GetUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
 type UserServiceServer interface {
-	GetUser(context.Context, *GetUserReq) (*GetUserRes, error)
-	GetAllUsers(context.Context, *GetAllUsersReq) (*GetAllUsersRes, error)
 	UpdateUser(context.Context, *UpdateUserReq) (*UpdateUserRes, error)
 	DeleteUser(context.Context, *DeleteUserReq) (*DeleteUserRes, error)
+	GetUser(context.Context, *GetUserReq) (*GetUserRes, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -258,17 +373,14 @@ type UserServiceServer interface {
 type UnimplementedUserServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserReq) (*GetUserRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
-}
-func (UnimplementedUserServiceServer) GetAllUsers(context.Context, *GetAllUsersReq) (*GetAllUsersRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAllUsers not implemented")
-}
 func (UnimplementedUserServiceServer) UpdateUser(context.Context, *UpdateUserReq) (*UpdateUserRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
 }
 func (UnimplementedUserServiceServer) DeleteUser(context.Context, *DeleteUserReq) (*DeleteUserRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServiceServer) GetUser(context.Context, *GetUserReq) (*GetUserRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -281,42 +393,6 @@ type UnsafeUserServiceServer interface {
 
 func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
 	s.RegisterService(&UserService_ServiceDesc, srv)
-}
-
-func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetUser(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_GetUser_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserReq))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _UserService_GetAllUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetAllUsersReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(UserServiceServer).GetAllUsers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: UserService_GetAllUsers_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).GetAllUsers(ctx, req.(*GetAllUsersReq))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _UserService_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -355,6 +431,24 @@ func _UserService_DeleteUser_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_GetUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).GetUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_GetUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).GetUser(ctx, req.(*GetUserReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -363,20 +457,16 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetUser",
-			Handler:    _UserService_GetUser_Handler,
-		},
-		{
-			MethodName: "GetAllUsers",
-			Handler:    _UserService_GetAllUsers_Handler,
-		},
-		{
 			MethodName: "UpdateUser",
 			Handler:    _UserService_UpdateUser_Handler,
 		},
 		{
 			MethodName: "DeleteUser",
 			Handler:    _UserService_DeleteUser_Handler,
+		},
+		{
+			MethodName: "GetUser",
+			Handler:    _UserService_GetUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -474,18 +564,18 @@ var TrendService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	TweetService_ReturnAll_FullMethodName   = "/proto.TweetService/ReturnAll"
 	TweetService_ReturnTweet_FullMethodName = "/proto.TweetService/ReturnTweet"
 	TweetService_PostTweet_FullMethodName   = "/proto.TweetService/PostTweet"
+	TweetService_ReturnAll_FullMethodName   = "/proto.TweetService/ReturnAll"
 )
 
 // TweetServiceClient is the client API for TweetService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TweetServiceClient interface {
-	ReturnAll(ctx context.Context, in *ReturnAllReq, opts ...grpc.CallOption) (*ReturnAllRes, error)
 	ReturnTweet(ctx context.Context, in *ReturnTweetReq, opts ...grpc.CallOption) (*ReturnTweetRes, error)
 	PostTweet(ctx context.Context, in *PostTweetReq, opts ...grpc.CallOption) (*PostTweetRes, error)
+	ReturnAll(ctx context.Context, in *ReturnAllReq, opts ...grpc.CallOption) (*ReturnAllRes, error)
 }
 
 type tweetServiceClient struct {
@@ -494,15 +584,6 @@ type tweetServiceClient struct {
 
 func NewTweetServiceClient(cc grpc.ClientConnInterface) TweetServiceClient {
 	return &tweetServiceClient{cc}
-}
-
-func (c *tweetServiceClient) ReturnAll(ctx context.Context, in *ReturnAllReq, opts ...grpc.CallOption) (*ReturnAllRes, error) {
-	out := new(ReturnAllRes)
-	err := c.cc.Invoke(ctx, TweetService_ReturnAll_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *tweetServiceClient) ReturnTweet(ctx context.Context, in *ReturnTweetReq, opts ...grpc.CallOption) (*ReturnTweetRes, error) {
@@ -523,13 +604,22 @@ func (c *tweetServiceClient) PostTweet(ctx context.Context, in *PostTweetReq, op
 	return out, nil
 }
 
+func (c *tweetServiceClient) ReturnAll(ctx context.Context, in *ReturnAllReq, opts ...grpc.CallOption) (*ReturnAllRes, error) {
+	out := new(ReturnAllRes)
+	err := c.cc.Invoke(ctx, TweetService_ReturnAll_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TweetServiceServer is the server API for TweetService service.
 // All implementations must embed UnimplementedTweetServiceServer
 // for forward compatibility
 type TweetServiceServer interface {
-	ReturnAll(context.Context, *ReturnAllReq) (*ReturnAllRes, error)
 	ReturnTweet(context.Context, *ReturnTweetReq) (*ReturnTweetRes, error)
 	PostTweet(context.Context, *PostTweetReq) (*PostTweetRes, error)
+	ReturnAll(context.Context, *ReturnAllReq) (*ReturnAllRes, error)
 	mustEmbedUnimplementedTweetServiceServer()
 }
 
@@ -537,14 +627,14 @@ type TweetServiceServer interface {
 type UnimplementedTweetServiceServer struct {
 }
 
-func (UnimplementedTweetServiceServer) ReturnAll(context.Context, *ReturnAllReq) (*ReturnAllRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReturnAll not implemented")
-}
 func (UnimplementedTweetServiceServer) ReturnTweet(context.Context, *ReturnTweetReq) (*ReturnTweetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReturnTweet not implemented")
 }
 func (UnimplementedTweetServiceServer) PostTweet(context.Context, *PostTweetReq) (*PostTweetRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostTweet not implemented")
+}
+func (UnimplementedTweetServiceServer) ReturnAll(context.Context, *ReturnAllReq) (*ReturnAllRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReturnAll not implemented")
 }
 func (UnimplementedTweetServiceServer) mustEmbedUnimplementedTweetServiceServer() {}
 
@@ -557,24 +647,6 @@ type UnsafeTweetServiceServer interface {
 
 func RegisterTweetServiceServer(s grpc.ServiceRegistrar, srv TweetServiceServer) {
 	s.RegisterService(&TweetService_ServiceDesc, srv)
-}
-
-func _TweetService_ReturnAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReturnAllReq)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(TweetServiceServer).ReturnAll(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: TweetService_ReturnAll_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TweetServiceServer).ReturnAll(ctx, req.(*ReturnAllReq))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _TweetService_ReturnTweet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -613,6 +685,24 @@ func _TweetService_PostTweet_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TweetService_ReturnAll_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReturnAllReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TweetServiceServer).ReturnAll(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TweetService_ReturnAll_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TweetServiceServer).ReturnAll(ctx, req.(*ReturnAllReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TweetService_ServiceDesc is the grpc.ServiceDesc for TweetService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -621,16 +711,16 @@ var TweetService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*TweetServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ReturnAll",
-			Handler:    _TweetService_ReturnAll_Handler,
-		},
-		{
 			MethodName: "ReturnTweet",
 			Handler:    _TweetService_ReturnTweet_Handler,
 		},
 		{
 			MethodName: "PostTweet",
 			Handler:    _TweetService_PostTweet_Handler,
+		},
+		{
+			MethodName: "ReturnAll",
+			Handler:    _TweetService_ReturnAll_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -4,6 +4,11 @@ option go_package = ".";
 
 import "google/api/annotations.proto";
 
+service UserDataService{
+  rpc GetAllUserData(GetAllUserDataReq) returns (GetAllUserDataRes){
+    option (google.api.http) = {get: "/data/{userId}"};
+  }
+}
 
 service AuthService{
   rpc Register(RegisterReq) returns(RegisterRes){
@@ -15,21 +20,17 @@ service AuthService{
   rpc Validate(ValidateReq) returns(ValidateRes){
     option (google.api.http) = {post: "/auth/validate"};
   }
+  rpc GetData(GetDataReq) returns (GetDataRes){}
 }
 
 service UserService{
-  rpc GetUser(GetUserReq) returns(GetUserRes){
-    option (google.api.http) = {get: "/account/{UserID}"};
-  }
-  rpc GetAllUsers(GetAllUsersReq) returns(GetAllUsersRes){
-    option (google.api.http) = {get: "/account/all"};
-  }
   rpc UpdateUser(UpdateUserReq) returns(UpdateUserRes){
     option (google.api.http) = {patch: "/account/{user.UserID}" body: "*"};
   }
   rpc DeleteUser(DeleteUserReq) returns(DeleteUserRes){
     option (google.api.http) = {delete: "/account/{userId}"};
   }
+  rpc GetUser(GetUserReq) returns (GetUserRes);
 }
 
 service TrendService{
@@ -39,16 +40,43 @@ service TrendService{
 }
 
 service TweetService{
-  rpc ReturnAll(ReturnAllReq) returns(ReturnAllRes){
-    option (google.api.http) = {get: "/tweet/all"};
-  }
   rpc ReturnTweet(ReturnTweetReq) returns(ReturnTweetRes){
     option (google.api.http) = {get: "/tweet/{TweetID}"};
   }
   rpc PostTweet(PostTweetReq) returns(PostTweetRes){
     option (google.api.http) = {post: "/tweet" body: "*"};
   }
+  rpc ReturnAll(ReturnAllReq) returns (ReturnAllRes);
 }
+
+//UserDataService
+message User {
+  string UserID = 1;
+  string Email = 2;
+  string password = 3;
+  string Username = 4 ;
+}
+
+message AuthData{
+  string id = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message TweetData{
+  string UserID = 1;
+  string Username = 2;
+  string Body = 3;
+}
+
+message AllUserData{
+  User user = 1;
+  AuthData authData = 2;
+  repeated TweetData tweetData = 3;
+}
+
+message GetAllUserDataReq{string userId = 1;}
+message GetAllUserDataRes{AllUserData allUserData = 1;}
 
 //AuthService
 //Register
@@ -63,28 +91,20 @@ message LoginRes{string status = 1; string access_token = 2;}
 message ValidateReq{string token = 1;}
 message ValidateRes{string status = 1; string userid = 2;}
 
-//AccountService
-message User {
-  string UserID = 1;
-  string Email = 2;
-  string password = 3;
-  string Username = 4 ;
-}
+//GetData
+message GetDataReq{string userId = 1;}
+message GetDataRes{AuthData authData = 1;}
 
+//AccountService
 //GetUser
 message GetUserReq{string UserID = 1;}
 message GetUserRes{User user = 1;}
-
-//GetAllUsers
-message GetAllUsersReq{}
-message GetAllUsersRes{repeated User user = 1;}
 
 //UpdateUser
 message UpdateUserReq{User user = 1;}
 message UpdateUserRes{User user = 1;}
 
 //DeleteUser
-//should probably delete ALL user data, GDPR
 message DeleteUserReq{string userId = 1;}
 message DeleteUserRes{string status = 1;}
 
@@ -108,8 +128,8 @@ message Tweet{
 }
 
 //ReturnAll
-message ReturnAllReq{}
-message ReturnAllRes{repeated Tweet tweets = 1;}
+message ReturnAllReq{string userId = 1;}
+message ReturnAllRes{repeated TweetData tweetData = 1;}
 
 //ReturnTweet
 message ReturnTweetReq{string TweetID = 1;}

@@ -2,13 +2,14 @@ syntax = "proto3";
 package proto;
 option go_package = ".";
 
-message User{string id = 1; string email = 2; string password = 3;}
+message AuthData{string id = 1; string email = 2; string password = 3;}
 
 service AuthService{
   rpc Register(RegisterReq) returns(RegisterRes){}
   rpc Login(LoginReq) returns(LoginRes){}
   rpc Validate(ValidateReq) returns(ValidateRes){}
   rpc DeleteData(DeleteDataReq) returns (DeleteDataRes){}
+  rpc GetData(GetDataReq) returns (GetDataRes){}
 }
 
 //Register
@@ -26,3 +27,7 @@ message ValidateRes{string status = 1; string userid = 2;}
 //DeleteData
 message DeleteDataReq{string userId = 1;}
 message DeleteDataRes{string status = 1;}
+
+//GetData
+message GetDataReq{string userId = 1;}
+message GetDataRes{AuthData authData = 1;}

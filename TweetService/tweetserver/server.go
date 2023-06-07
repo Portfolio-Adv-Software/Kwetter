@@ -55,13 +55,12 @@ func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteD
 	return res, nil
 }
 
-func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
-	cursor, err := tweetdb.Find(ctx, bson.M{})
+func (t TweetServiceServer) ReturnAll(ctx context.Context, req *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
+	cursor, err := tweetdb.Find(ctx, bson.M{"userid": req.GetUserId()})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding tweets: %v", err))
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Error finding tweets: %v", err))
 	}
 	defer cursor.Close(ctx)
-
 	var tweets []*pbtweet.Tweet
 	for cursor.Next(ctx) {
 		data := &pbtweet.Tweet{}

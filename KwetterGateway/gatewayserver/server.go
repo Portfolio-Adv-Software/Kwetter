@@ -23,6 +23,38 @@ import (
 	"sync"
 )
 
+type UserDataServiceServer struct {
+	pb.UnimplementedUserDataServiceServer
+	AuthClient  pb.AuthServiceClient
+	UserClient  pb.UserServiceClient
+	TweetClient pb.TweetServiceClient
+}
+
+func (u UserDataServiceServer) GetAllUserData(ctx context.Context, req *pb.GetAllUserDataReq) (*pb.GetAllUserDataRes, error) {
+	userId := req.GetUserId()
+	authReq := &pb.GetDataReq{UserId: userId}
+	userReq := &pb.GetUserReq{UserID: userId}
+	tweetReq := &pb.ReturnAllReq{UserId: userId}
+	authRes, err := u.AuthClient.GetData(ctx, authReq)
+	if err != nil {
+		return nil, err
+	}
+	userRes, err := u.UserClient.GetUser(ctx, userReq)
+	if err != nil {
+		return nil, err
+	}
+	tweetRes, err := u.TweetClient.ReturnAll(ctx, tweetReq)
+	if err != nil {
+		return nil, err
+	}
+	res := &pb.AllUserData{
+		User:      userRes.GetUser(),
+		AuthData:  authRes.GetAuthData(),
+		TweetData: tweetRes.GetTweetData(),
+	}
+	return &pb.GetAllUserDataRes{AllUserData: res}, nil
+}
+
 type AuthServiceServer struct {
 	pb.UnimplementedAuthServiceServer
 	AuthClient pb.AuthServiceClient
@@ -43,14 +75,6 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pb.ValidateReq) (*
 type UserServiceServer struct {
 	pb.UnimplementedUserServiceServer
 	UserClient pb.UserServiceClient
-}
-
-func (u UserServiceServer) GetUser(ctx context.Context, req *pb.GetUserReq) (*pb.GetUserRes, error) {
-	return u.UserClient.GetUser(ctx, req)
-}
-
-func (u UserServiceServer) GetAllUsers(ctx context.Context, req *pb.GetAllUsersReq) (*pb.GetAllUsersRes, error) {
-	return u.UserClient.GetAllUsers(ctx, req)
 }
 
 func (u UserServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
@@ -75,10 +99,6 @@ type TweetServiceServer struct {
 	TweetClient pb.TweetServiceClient
 }
 
-func (t TweetServiceServer) ReturnAll(ctx context.Context, req *pb.ReturnAllReq) (*pb.ReturnAllRes, error) {
-	return t.TweetClient.ReturnAll(ctx, req)
-}
-
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pb.ReturnTweetReq) (*pb.ReturnTweetRes, error) {
 	return t.TweetClient.ReturnTweet(ctx, req)
 }
@@ -96,6 +116,7 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	opts = append(opts, grpc.UnaryInterceptor(authInterceptor))
 	s := grpc.NewServer(opts...)
 	ctx := context.Background()
+	registerUserDataService(s, ctx, mux)
 	registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
 	registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
 	registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
@@ -151,6 +172,33 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func registerUserDataService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux) {
+	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	userConn, err := grpc.Dial(config.Config.UserServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial userservice: %v", err)
+	}
+	tweetConn, err := grpc.Dial(config.Config.TweetServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial tweetservice: %v", err)
+	}
+	authClient := pb.NewAuthServiceClient(authConn)
+	userClient := pb.NewUserServiceClient(userConn)
+	tweetClient := pb.NewTweetServiceClient(tweetConn)
+	userDataServer := &UserDataServiceServer{
+		AuthClient:  authClient,
+		UserClient:  userClient,
+		TweetClient: tweetClient,
+	}
+	pb.RegisterUserDataServiceServer(s, userDataServer)
+	err = pb.RegisterUserDataServiceHandlerServer(ctx, mux, userDataServer)
+	if err != nil {
+		log.Fatalf("failed to register UserDataService handler: %v", err)
+	}
+}
 func registerAuthService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, AuthServiceAddr string) {
 	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

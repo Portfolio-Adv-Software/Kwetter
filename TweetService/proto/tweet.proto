@@ -15,8 +15,8 @@ message Tweet{
   string Body = 3;
 }
 
-//return all tweets
-message ReturnAllReq{}
+//return all tweets for a user
+message ReturnAllReq{string userId = 1;}
 message ReturnAllRes{repeated Tweet tweet = 1;}
 
 //return single tweet

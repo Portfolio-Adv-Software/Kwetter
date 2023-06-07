@@ -15,7 +15,7 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func ProduceMessage(queue string, user *pb.User) {
+func ProduceMessage(queue string, user *pb.AuthData) {
 	conn, err := amqp.Dial("amqps://ctltdklj:qV9vx5HIf7JyfDDA0fRto3Disk-T57CF@goose.rmq2.cloudamqp.com/ctltdklj")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
@@ -37,7 +37,7 @@ func ProduceMessage(queue string, user *pb.User) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	user = &pb.User{
+	user = &pb.AuthData{
 		Id:       user.GetId(),
 		Email:    user.GetEmail(),
 		Password: user.GetPassword(),

@@ -27,6 +27,26 @@ type AuthServiceServer struct {
 	pbauth.UnimplementedAuthServiceServer
 }
 
+func (a AuthServiceServer) GetData(ctx context.Context, req *pbauth.GetDataReq) (*pbauth.GetDataRes, error) {
+	userID, err := primitive.ObjectIDFromHex(req.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+	data := &pbauth.AuthData{}
+	err = authdb.FindOne(ctx, bson.M{"_id": userID}).Decode(data)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding user: %v", err))
+	}
+
+	authData := &pbauth.AuthData{
+		Id:       req.GetUserId(),
+		Email:    data.GetEmail(),
+		Password: data.GetPassword(),
+	}
+	res := &pbauth.GetDataRes{AuthData: authData}
+	return res, nil
+}
+
 func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
 	objectID, err := primitive.ObjectIDFromHex(req.GetUserId())
 	if err != nil {
@@ -67,7 +87,7 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 		return nil, status.Error(codes.Aborted, "No permission to store data")
 	}
 	data := req.GetEmail()
-	user := &pbauth.User{}
+	user := &pbauth.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
 	if err == nil {
 		return nil, status.Errorf(codes.AlreadyExists, "Email is already registered")
@@ -89,7 +109,7 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 		return nil, status.Errorf(codes.Internal, "Invalid type for InsertedID")
 	}
 
-	registeredUser := &pbauth.User{
+	registeredUser := &pbauth.AuthData{
 		Id:       insertedID.Hex(),
 		Email:    newUser.GetEmail(),
 		Password: "",
@@ -101,7 +121,7 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pbauth.LoginRes, error) {
-	user := &pbauth.User{}
+	user := &pbauth.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": req.Email}).Decode(user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
@@ -167,7 +187,7 @@ const (
 	admin
 )
 
-func generateJWTToken(user *pbauth.User) (string, error) {
+func generateJWTToken(user *pbauth.AuthData) (string, error) {
 	claims := jwt.MapClaims{
 		"id":      user.GetId(),
 		"email":   user.GetEmail(),
