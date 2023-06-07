@@ -16,7 +16,7 @@ func failOnError(err error, msg string) {
 }
 
 func ProduceMessage(queue string, user *pb.AuthData) {
-	conn, err := amqp.Dial("amqps://ctltdklj:qV9vx5HIf7JyfDDA0fRto3Disk-T57CF@goose.rmq2.cloudamqp.com/ctltdklj")
+	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 

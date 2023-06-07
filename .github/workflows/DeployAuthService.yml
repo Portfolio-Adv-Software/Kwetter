@@ -30,6 +30,7 @@ jobs:
           echo "MONGO_USERNAME=${{ secrets.MONGO_USERNAME }}" > .env
           echo "MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}" >> .env
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+          echo "RMQ_KEY"=${{ secrets.RMQ_KEY }} >> .env
 
       - name: Build Auth Service
         working-directory: AuthService
