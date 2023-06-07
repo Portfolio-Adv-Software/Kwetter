@@ -11,14 +11,11 @@ COPY . .
 
 ARG TARGET_FILE=main.go
 
-RUN go build -o /gateway ${TARGET_FILE}
+RUN CGO_ENABLED=0 go build -o /gateway ${TARGET_FILE}
 
-FROM golang:1.20-alpine
+FROM alpine
 
-COPY --from=builder /gateway /
-
-RUN adduser -D gateway-service
-USER gateway-service
+COPY --from=builder /account-service /
 
 EXPOSE 8080
 EXPOSE 50055
