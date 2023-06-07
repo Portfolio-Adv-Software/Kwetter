@@ -15,7 +15,7 @@ RUN CGO_ENABLED=0 go build -o /gateway ${TARGET_FILE}
 
 FROM alpine
 
-COPY --from=builder /account-service /
+COPY --from=builder /gateway-service /
 
 EXPOSE 8080
 EXPOSE 50055
