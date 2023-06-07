@@ -1,6 +1,9 @@
 FROM golang:1.20-alpine AS builder
 
-RUN apk update && apk add --no-cache git ca-certificates
+ENV GOROOT=/usr/local/go
+ENV PATH=$GOROOT/bin:$PATH
+
+RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
@@ -13,7 +16,7 @@ ARG TARGET_FILE=main.go
 
 RUN go build -o /gateway ${TARGET_FILE}
 
-FROM alpine
+FROM golang:1.20-alpine
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /gateway /
