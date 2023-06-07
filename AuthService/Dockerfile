@@ -21,6 +21,8 @@ COPY --from=builder /auth-service /
 RUN adduser -D auth-service
 USER auth-service
 
+ENV PATH="/:${PATH}"
+
 EXPOSE 50053
 
 CMD ["/auth-service"]
