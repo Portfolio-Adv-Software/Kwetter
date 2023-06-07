@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Tests
         working-directory: KwetterGateway
-        run: go test ./...
+        run: go test ./Tests/...
 
       - name: Build KwetterGateway
         working-directory: KwetterGateway
