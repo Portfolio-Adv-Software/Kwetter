@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Tests
         working-directory: TweetService
-        run: go test ./...
+        run: go test ./Tests/...
 
       - name: Build Tweet Service
         working-directory: TweetService
