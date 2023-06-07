@@ -124,7 +124,7 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pb
 	user := &pbauth.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": req.Email}).Decode(user)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Login credentials invalid"))
 	}
 
 	if !verifyPassword(req.GetPassword(), user.Password) {
@@ -132,7 +132,7 @@ func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pb
 	}
 	token, _ := generateJWTToken(user)
 	return &pbauth.LoginRes{
-		Status: "Login succesful",
+		Status: "Login successful",
 		Token:  token,
 	}, nil
 }
@@ -200,7 +200,6 @@ func generateJWTToken(user *pbauth.AuthData) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return signedToken, nil
 }
 

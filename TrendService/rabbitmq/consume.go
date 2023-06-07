@@ -14,8 +14,6 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-var rMQUrl = os.Getenv("RMQ_KEY")
-
 func failOnError(err error, msg string) {
 	if err != nil {
 		log.Panicf("%s: %s", msg, err)
@@ -23,6 +21,7 @@ func failOnError(err error, msg string) {
 }
 
 func ConsumeMessage(queue string, wg *sync.WaitGroup) {
+	rMQUrl := os.Getenv("RMQ_KEY")
 	defer wg.Done()
 	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
