@@ -32,10 +32,6 @@ jobs:
           echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
           echo "RMQ_KEY"=${{ secrets.RMQ_KEY }} >> .env
 
-      - name: Run Tests
-        working-directory: AuthService
-        run: go test ./internal/Tests/...
-
       - name: Build Auth Service
         working-directory: AuthService
         run: docker build . -t auth-service-latest

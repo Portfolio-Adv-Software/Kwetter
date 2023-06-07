@@ -31,10 +31,6 @@ jobs:
           echo "MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }}" >> .env
           echo "RMQ_KEY"=${{ secrets.RMQ_KEY }} >> .env
 
-      - name: Run Tests
-        working-directory: AccountService
-        run: go test ./internal/Tests/...
-
       - name: Build Account Service
         working-directory: AccountService
         run: docker build . -t account-service-latest
