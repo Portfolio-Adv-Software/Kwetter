@@ -7,13 +7,13 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . /app
+COPY . ./
 
 ARG TARGET_FILE=main.go
 
 RUN go build -o /trend-service ${TARGET_FILE}
 
-FROM scratch
+FROM alpine
 
 COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
