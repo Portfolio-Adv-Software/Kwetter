@@ -7,7 +7,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . ./
+COPY . .
 
 ARG TARGET_FILE=main.go
 
