@@ -17,6 +17,9 @@ FROM alpine
 
 COPY --from=builder /gateway /
 
+RUN adduser -D gateway-service
+USER gateway-service
+
 EXPOSE 8080
 EXPOSE 50055
 

@@ -11,9 +11,9 @@ COPY . .
 
 ARG TARGET_FILE=main.go
 
-RUN go build -o /auth-service ${TARGET_FILE}
+RUN CGO_ENABLED=0 go build -o /auth-service ${TARGET_FILE}
 
-FROM golang:1.20-alpine
+FROM alpine
 
 COPY .env /.env
 COPY --from=builder /auth-service /
