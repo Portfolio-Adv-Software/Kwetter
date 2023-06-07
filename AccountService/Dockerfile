@@ -5,6 +5,7 @@ RUN apk update && apk add --no-cache git ca-certificates
 WORKDIR /app
 
 RUN go get -d -v ./...
+RUN go mod tidy
 
 COPY . .
 
