@@ -1,8 +1,5 @@
 FROM golang:1.20-alpine AS builder
 
-ENV GOROOT=/usr/local/go
-ENV PATH=$GOROOT/bin:$PATH
-
 RUN apk update && apk add --no-cache git
 
 WORKDIR /app
