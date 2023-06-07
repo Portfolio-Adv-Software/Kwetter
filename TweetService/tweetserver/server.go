@@ -17,19 +17,50 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"sync"
+	"time"
 )
 
 type TweetServiceServer struct {
 	pbtweet.UnimplementedTweetServiceServer
 }
 
-func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
-	cursor, err := tweetdb.Find(ctx, bson.M{})
+func (t TweetServiceServer) DeleteData(ctx context.Context, req *pbtweet.DeleteDataReq) (*pbtweet.DeleteDataRes, error) {
+	filter := bson.M{"userid": req.GetUserId()}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := tweetdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if count == 0 {
+			res := &pbtweet.DeleteDataRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := tweetdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			res := &pbtweet.DeleteDataRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbtweet.DeleteDataRes{Status: "Failed to delete records"}
+	return res, nil
+}
+
+func (t TweetServiceServer) ReturnAll(ctx context.Context, req *pbtweet.ReturnAllReq) (*pbtweet.ReturnAllRes, error) {
+	cursor, err := tweetdb.Find(ctx, bson.M{"userid": req.GetUserId()})
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding tweets: %v", err))
+		return nil, status.Errorf(codes.NotFound, fmt.Sprintf("Error finding tweets: %v", err))
 	}
 	defer cursor.Close(ctx)
-
 	var tweets []*pbtweet.Tweet
 	for cursor.Next(ctx) {
 		data := &pbtweet.Tweet{}
@@ -43,47 +74,17 @@ func (t TweetServiceServer) ReturnAll(ctx context.Context, _ *pbtweet.ReturnAllR
 	return res, nil
 }
 
-//func (t TweetServiceServer) ReturnAll(_ *pbtweet.ReturnAllReq, s pbtweet.Return) error {
-//	data := &pbtweet.Tweet{}
-//	cursor, err := tweetdb.Find(context.Background(), bson.M{})
-//	if err != nil {
-//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown internal error: %v", err))
-//	}
-//	defer cursor.Close(context.Background())
-//	for cursor.Next(context.Background()) {
-//		err := cursor.Decode(data)
-//		if err != nil {
-//			return status.Errorf(codes.Unavailable, fmt.Sprintf("Could not decode data: %v", err))
-//		}
-//		s.Send(&pbtweet.ReturnAllRes{
-//			Tweet: &pbtweet.Tweet{
-//				UserID:   data.UserID,
-//				Username: data.Username,
-//				TweetID:  data.TweetID,
-//				Body:     data.Body,
-//				Created:  data.Created,
-//			},
-//		})
-//	}
-//	if err := cursor.Err(); err != nil {
-//		return status.Errorf(codes.Internal, fmt.Sprintf("Unknown cursor error: %v", err))
-//	}
-//	return nil
-//}
-
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pbtweet.ReturnTweetReq) (*pbtweet.ReturnTweetRes, error) {
-	tweetID := req.TweetID
+	tweetID := req.GetTweetID()
 	data := &pbtweet.Tweet{}
-	err := tweetdb.FindOne(ctx, bson.M{"tweetid": tweetID}).Decode(data)
+	err := tweetdb.FindOne(ctx, bson.M{"_id": tweetID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("unknown internal error: %v", err))
 	}
 	tweet := &pbtweet.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
-		TweetID:  data.TweetID,
 		Body:     data.Body,
-		Created:  data.Created,
 	}
 	res := &pbtweet.ReturnTweetRes{Tweet: tweet}
 	return res, nil
@@ -95,9 +96,7 @@ func (t TweetServiceServer) PostTweet(ctx context.Context, req *pbtweet.PostTwee
 	tweet := &pbtweet.Tweet{
 		UserID:   data.UserID,
 		Username: data.Username,
-		TweetID:  data.TweetID,
 		Body:     data.Body,
-		Created:  data.Created,
 	}
 
 	re := regexp.MustCompile(`#\w+`)
@@ -119,7 +118,8 @@ var db *mongo.Client
 var tweetdb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50051")
 
@@ -134,6 +134,7 @@ func InitGRPC() {
 
 	var opts []grpc.ServerOption
 	s := grpc.NewServer(opts...)
+
 	srv := &TweetServiceServer{}
 	pbtweet.RegisterTweetServiceServer(s, srv)
 	reflection.Register(s)

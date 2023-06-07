@@ -2,20 +2,17 @@ syntax = "proto3";
 package proto;
 option go_package = ".";
 
-import "google/protobuf/timestamp.proto";
-
 message Tweet{
   string UserID = 1;
   string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
-  google.protobuf.Timestamp created = 5;
-  repeated string Trend = 6;
+  string Body = 3;
+  repeated string Trend = 4;
 }
 
 service TrendService{
   rpc PostTrend(PostTrendReq) returns (PostTrendRes);
   rpc GetTrend(GetTrendReq) returns (GetTrendRes);
+  rpc DeleteData(DeleteDataReq) returns (DeleteDataRes);
 }
 
 //posttrend
@@ -25,3 +22,7 @@ message PostTrendRes{Tweet tweet = 1;}
 //gettrend
 message GetTrendReq{string Trends = 1;}
 message GetTrendRes{repeated Tweet tweets = 1;}
+
+//deletedata
+message DeleteDataReq{string userId = 1;}
+message DeleteDataRes{string status = 1;}

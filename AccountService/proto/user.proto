@@ -2,7 +2,6 @@ syntax = "proto3";
 package proto;
 option go_package = ".";
 
-import "google/protobuf/timestamp.proto";
 
 message User {
   string UserID = 1;
@@ -11,46 +10,21 @@ message User {
   string Username = 4 ;
 }
 
-message AuthData{
-  string email = 1;
-}
-
-message TweetData{
-  string UserID = 1;
-  string Username = 2;
-  string TweetID = 3;
-  string Body = 4;
-  google.protobuf.Timestamp created = 5;
-}
-
-message UserData{
-  AuthData authData = 1;
-  repeated TweetData tweetData = 2;
-}
-
 service UserService{
   rpc CreateUser(CreateUserReq) returns (CreateUserRes);
   rpc GetUser(GetUserReq) returns (GetUserRes);
-  rpc GetALlUsers(GetAllUsersReq) returns (GetAllUsersRes);
   rpc UpdateUser(UpdateUserReq) returns (UpdateUserRes);
   rpc DeleteUser(DeleteUserReq) returns (DeleteUserRes);
-  rpc GetAllUserData(GetAllUserDataReq) returns (GetAllUserDataRes);
 }
 
 message CreateUserReq{User user = 1;}
 message CreateUserRes{User user = 1;}
 
-message GetUserReq{string UserID = 1;}
+message GetUserReq{string userid = 1;}
 message GetUserRes{User user = 1;}
-
-message GetAllUsersReq{}
-message GetAllUsersRes{repeated User user = 1;}
 
 message UpdateUserReq{User user = 1;}
 message UpdateUserRes{User user = 1;}
 
-message DeleteUserReq{string UserID = 1;}
-message DeleteUserRes{User user = 1;}
-
-message GetAllUserDataReq{string UserID = 1;}
-message GetAllUserDataRes{UserData userdata = 1;}
+message DeleteUserReq{string userId = 1;}
+message DeleteUserRes{string status = 1;}

@@ -1,8 +1,9 @@
-package grpc
+package userserver
 
 import (
 	"fmt"
 	pbuser "github.com/Portfolio-Adv-Software/Kwetter/AccountService/proto"
+	"github.com/Portfolio-Adv-Software/Kwetter/AccountService/rabbitmq"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -16,16 +17,13 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 )
 
 type UserServiceServer struct {
 	pbuser.UnimplementedUserServiceServer
 }
 
-func (u UserServiceServer) GetAllUserData(ctx context.Context, req *pbuser.GetAllUserDataReq) (*pbuser.GetAllUserDataRes, error) {
-	//TODO implement me
-	panic("implement me")
-}
 func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUserReq) (*pbuser.CreateUserRes, error) {
 	data := req.GetUser()
 
@@ -45,40 +43,13 @@ func (u UserServiceServer) CreateUser(ctx context.Context, req *pbuser.CreateUse
 }
 
 func (u UserServiceServer) GetUser(ctx context.Context, req *pbuser.GetUserReq) (*pbuser.GetUserRes, error) {
-	userID := req.GetUserID()
+	userID := req.GetUserid()
 	data := &pbuser.User{}
-	err := accountdb.FindOne(ctx, bson.M{"userID": userID}).Decode(data)
+	err := accountdb.FindOne(ctx, bson.M{"userid": userID}).Decode(data)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding user: %v", err))
 	}
-
-	user := &pbuser.User{
-		UserID:   data.GetUserID(),
-		Email:    data.GetEmail(),
-		Password: data.GetPassword(),
-		Username: data.GetUsername(),
-	}
-	res := &pbuser.GetUserRes{User: user}
-	return res, nil
-}
-
-func (u UserServiceServer) GetALlUsers(ctx context.Context, _ *pbuser.GetAllUsersReq) (*pbuser.GetAllUsersRes, error) {
-	cursor, err := accountdb.Find(ctx, bson.M{})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding users: %v", err))
-	}
-	defer cursor.Close(ctx)
-
-	var users []*pbuser.User
-	for cursor.Next(ctx) {
-		data := &pbuser.User{}
-		err := cursor.Decode(data)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, fmt.Sprintf("error decoding data: %v", err))
-		}
-		users = append(users, data)
-	}
-	res := &pbuser.GetAllUsersRes{User: users}
+	res := &pbuser.GetUserRes{User: data}
 	return res, nil
 }
 
@@ -105,8 +76,34 @@ func (u UserServiceServer) UpdateUser(ctx context.Context, req *pbuser.UpdateUse
 }
 
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *pbuser.DeleteUserReq) (*pbuser.DeleteUserRes, error) {
-	//TODO implement me
-	panic("implement me")
+	rabbitmq.SendDeleteGDPRUser(req.GetUserId())
+	filter := bson.M{"userid": req.GetUserId()}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := accountdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if count == 0 {
+			res := &pbuser.DeleteUserRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := accountdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			res := &pbuser.DeleteUserRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbuser.DeleteUserRes{Status: "User data deleted successfully"}
+	return res, nil
 }
 
 var db *mongo.Client
@@ -158,7 +155,7 @@ func InitGRPC(wg *sync.WaitGroup) {
 	}
 
 	// Bind our collection to our global variable for use in other methods
-	accountdb = db.Database("AccountTest").Collection("kwetterAccounts")
+	accountdb = db.Database("AccountTest").Collection("KwetterAccounts")
 
 	// Start the server in a child routine
 	go func() {

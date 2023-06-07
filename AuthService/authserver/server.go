@@ -6,6 +6,7 @@ import (
 	"github.com/Portfolio-Adv-Software/Kwetter/AuthService/rabbitmq"
 	"github.com/golang-jwt/jwt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
@@ -18,6 +19,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 )
 
@@ -25,28 +27,92 @@ type AuthServiceServer struct {
 	pbauth.UnimplementedAuthServiceServer
 }
 
+func (a AuthServiceServer) GetData(ctx context.Context, req *pbauth.GetDataReq) (*pbauth.GetDataRes, error) {
+	userID, err := primitive.ObjectIDFromHex(req.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+	data := &pbauth.AuthData{}
+	err = authdb.FindOne(ctx, bson.M{"_id": userID}).Decode(data)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("error finding user: %v", err))
+	}
+
+	authData := &pbauth.AuthData{
+		Id:       req.GetUserId(),
+		Email:    data.GetEmail(),
+		Password: data.GetPassword(),
+	}
+	res := &pbauth.GetDataRes{AuthData: authData}
+	return res, nil
+}
+
+func (a AuthServiceServer) DeleteData(ctx context.Context, req *pbauth.DeleteDataReq) (*pbauth.DeleteDataRes, error) {
+	objectID, err := primitive.ObjectIDFromHex(req.GetUserId())
+	if err != nil {
+		return nil, err
+	}
+	filter := bson.M{"_id": objectID}
+	maxRetries := 3
+	retryCount := 0
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	for retryCount < maxRetries {
+		count, err := authdb.CountDocuments(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		if count == 0 {
+			res := &pbauth.DeleteDataRes{Status: "No documents found to delete"}
+			return res, nil
+		}
+		deleteResult, err := authdb.DeleteMany(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		if deleteResult.DeletedCount == count {
+			res := &pbauth.DeleteDataRes{Status: "All found documents deleted"}
+			return res, nil
+		}
+		retryCount++
+	}
+	res := &pbauth.DeleteDataRes{Status: "Failed to delete records"}
+	return res, nil
+}
+
 func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq) (*pbauth.RegisterRes, error) {
+	if !req.DataPermission {
+		return nil, status.Error(codes.Aborted, "No permission to store data")
+	}
 	data := req.GetEmail()
-	user := &pbauth.User{}
+	user := &pbauth.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": data}).Decode(user)
 	if err == nil {
-		return &pbauth.RegisterRes{Status: "Email is already registered"}, nil
+		return nil, status.Errorf(codes.AlreadyExists, "Email is already registered")
 	}
 
 	newUser := &pbauth.RegisterReq{
-		Email:    req.GetEmail(),
-		Password: HashPassword(req.GetPassword()),
+		Email:          req.GetEmail(),
+		Password:       HashPassword(req.GetPassword()),
+		DataPermission: req.GetDataPermission(),
 	}
 
-	_, err = authdb.InsertOne(ctx, newUser)
+	insertResult, err := authdb.InsertOne(ctx, newUser)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to register user: %v", err))
 	}
 
-	registeredUser := &pbauth.User{}
-	err = authdb.FindOne(ctx, bson.M{"email": newUser.GetEmail()}).Decode(registeredUser)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, fmt.Sprintf("Unable to retrieve registered user for queue: %v", err))
+	insertedID, ok := insertResult.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "Invalid type for InsertedID")
+	}
+
+	registeredUser := &pbauth.AuthData{
+		Id:       insertedID.Hex(),
+		Email:    newUser.GetEmail(),
+		Password: "",
 	}
 	rabbitmq.ProduceMessage("user_queue", registeredUser)
 	return &pbauth.RegisterRes{
@@ -55,7 +121,7 @@ func (a AuthServiceServer) Register(ctx context.Context, req *pbauth.RegisterReq
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *pbauth.LoginReq) (*pbauth.LoginRes, error) {
-	user := &pbauth.User{}
+	user := &pbauth.AuthData{}
 	err := authdb.FindOne(ctx, bson.M{"email": req.Email}).Decode(user)
 	if err != nil {
 		return nil, status.Errorf(codes.Unauthenticated, fmt.Sprintf("Login credentials invalid"))
@@ -92,16 +158,22 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *pbauth.ValidateReq
 		return &pbauth.ValidateRes{Status: "INVALID"}, nil
 	}
 
-	user := &pbauth.User{}
+	type User struct {
+		Id    string `bson:"_id"`
+		Email string `bson:"email"`
+	}
+	user := &User{}
 	emailClaim := token.Claims.(jwt.MapClaims)
 	email := emailClaim["email"].(string)
 	err = authdb.FindOne(ctx, bson.M{"email": email}).Decode(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %v", err)
 	}
-
 	// Token is valid
-	return &pbauth.ValidateRes{Status: "VALID"}, nil
+	return &pbauth.ValidateRes{
+		Status: "Token Valid",
+		Userid: user.Id,
+	}, nil
 }
 
 var secretKey = os.Getenv("SECRET_KEY")
@@ -115,7 +187,7 @@ const (
 	admin
 )
 
-func generateJWTToken(user *pbauth.User) (string, error) {
+func generateJWTToken(user *pbauth.AuthData) (string, error) {
 	claims := jwt.MapClaims{
 		"id":      user.GetId(),
 		"email":   user.GetEmail(),
@@ -145,7 +217,8 @@ var db *mongo.Client
 var authdb *mongo.Collection
 var mongoCtx context.Context
 
-func InitGRPC() {
+func InitGRPC(wg *sync.WaitGroup) {
+	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50053")
 

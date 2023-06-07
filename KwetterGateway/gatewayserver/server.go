@@ -1,20 +1,59 @@
 package gatewayserver
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/config"
 	pb "github.com/Portfolio-Adv-Software/Kwetter/KwetterGateway/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
+	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
-	"time"
 )
+
+type UserDataServiceServer struct {
+	pb.UnimplementedUserDataServiceServer
+	AuthClient  pb.AuthServiceClient
+	UserClient  pb.UserServiceClient
+	TweetClient pb.TweetServiceClient
+}
+
+func (u UserDataServiceServer) GetAllUserData(ctx context.Context, req *pb.GetAllUserDataReq) (*pb.GetAllUserDataRes, error) {
+	userId := req.GetUserId()
+	authReq := &pb.GetDataReq{UserId: userId}
+	userReq := &pb.GetUserReq{UserID: userId}
+	tweetReq := &pb.ReturnAllReq{UserId: userId}
+	authRes, err := u.AuthClient.GetData(ctx, authReq)
+	if err != nil {
+		return nil, err
+	}
+	userRes, err := u.UserClient.GetUser(ctx, userReq)
+	if err != nil {
+		return nil, err
+	}
+	tweetRes, err := u.TweetClient.ReturnAll(ctx, tweetReq)
+	if err != nil {
+		return nil, err
+	}
+	res := &pb.AllUserData{
+		User:      userRes.GetUser(),
+		AuthData:  authRes.GetAuthData(),
+		TweetData: tweetRes.GetTweetData(),
+	}
+	return &pb.GetAllUserDataRes{AllUserData: res}, nil
+}
 
 type AuthServiceServer struct {
 	pb.UnimplementedAuthServiceServer
@@ -22,17 +61,14 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *pb.RegisterReq) (*pb.RegisterRes, error) {
-	log.Println(req.String())
 	return a.AuthClient.Register(ctx, req)
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *pb.LoginReq) (*pb.LoginRes, error) {
-	log.Println(req.String())
 	return a.AuthClient.Login(ctx, req)
 }
 
 func (a AuthServiceServer) Validate(ctx context.Context, req *pb.ValidateReq) (*pb.ValidateRes, error) {
-	log.Println(req.String())
 	return a.AuthClient.Validate(ctx, req)
 }
 
@@ -41,19 +77,11 @@ type UserServiceServer struct {
 	UserClient pb.UserServiceClient
 }
 
-func (u UserServiceServer) GetUser(ctx context.Context, req *pb.GetUserReq) (*pb.GetUserRes, error) {
-	return u.UserClient.GetUser(ctx, req)
-}
-
-func (u UserServiceServer) GetAllUsers(ctx context.Context, req *pb.GetAllUsersReq) (*pb.GetAllUsersRes, error) {
-	return u.UserClient.GetAllUsers(ctx, req)
-}
-
 func (u UserServiceServer) UpdateUser(ctx context.Context, req *pb.UpdateUserReq) (*pb.UpdateUserRes, error) {
 	return u.UserClient.UpdateUser(ctx, req)
 }
 
-func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.UpdateUserRes, error) {
+func (u UserServiceServer) DeleteUser(ctx context.Context, req *pb.DeleteUserReq) (*pb.DeleteUserRes, error) {
 	return u.UserClient.DeleteUser(ctx, req)
 }
 
@@ -71,10 +99,6 @@ type TweetServiceServer struct {
 	TweetClient pb.TweetServiceClient
 }
 
-func (t TweetServiceServer) ReturnAll(ctx context.Context, req *pb.ReturnAllReq) (*pb.ReturnAllRes, error) {
-	return t.TweetClient.ReturnAll(ctx, req)
-}
-
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *pb.ReturnTweetReq) (*pb.ReturnTweetRes, error) {
 	return t.TweetClient.ReturnTweet(ctx, req)
 }
@@ -83,174 +107,225 @@ func (t TweetServiceServer) PostTweet(ctx context.Context, req *pb.PostTweetReq)
 	return t.TweetClient.PostTweet(ctx, req)
 }
 
-type Server struct {
-	authConn  *grpc.ClientConn
-	userConn  *grpc.ClientConn
-	trendConn *grpc.ClientConn
-	tweetConn *grpc.ClientConn
-
-	authClient  pb.AuthServiceClient
-	userClient  pb.UserServiceClient
-	trendClient pb.TrendServiceClient
-	tweetClient pb.TweetServiceClient
-
-	mux        *runtime.ServeMux
-	grpcServer *grpc.Server
-}
-
-func InitMux(wg *sync.WaitGroup, config *ServiceConfig) {
+func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	defer wg.Done()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	fmt.Println("Starting server on port: 50055")
+
+	var opts []grpc.ServerOption
+	opts = append(opts, grpc.UnaryInterceptor(authInterceptor))
+	s := grpc.NewServer(opts...)
 	ctx := context.Background()
-	server := &Server{mux: runtime.NewServeMux()}
-	server.setupGRPCConnections(config)
-	server.registerLocalEndpoints(ctx)
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: server.mux,
-	}
-	//registerEndpoints(ctx, mux, config)
-	//handler := loggingMiddleware(mux)
+	registerUserDataService(s, ctx, mux)
+	registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
+	registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
+	registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
+	registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
 
-	var srvWg sync.WaitGroup
-	srvWg.Add(1)
-	log.Println("starting gateway server on port 8080...")
-	go func() {
-		err := srv.ListenAndServe()
-		if err != nil && err.Error() != "http: Server closed" {
-			log.Fatalf("failed to start gateway server: %v", err)
-		}
-		srvWg.Done()
-	}()
-	log.Println("gateway server successfully started on port 8080...")
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-
-	log.Println("\nShutting down gateway server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Failed to gracefully shutdown gateway server: %v", err)
-	}
-	log.Println("gateway successfully shutdown.")
-	srvWg.Wait()
-}
-
-//loggingMiddleware gives logs in terminal about http requests.
-//func loggingMiddleware(next http.Handler) http.Handler {
-//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
-//		body, err := io.ReadAll(r.Body)
-//		if err != nil {
-//			log.Printf("Failed to read request body: %v", err)
-//		} else {
-//			// Log the request body
-//			log.Printf("Request body: %s", string(body))
-//		}
-//		r.Body = io.NopCloser(bytes.NewBuffer(body))
-//		next.ServeHTTP(w, r)
-//		log.Printf("Sent response: %d", w.(http.ResponseWriter))
-//	})
-//}
-
-func (s *Server) setupGRPCConnections(config *ServiceConfig) {
-	var err error
-	s.authConn, err = grpc.Dial(config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to dial authservice: %v", err)
-	}
-	s.authClient = pb.NewAuthServiceClient(s.authConn)
-
-	s.userConn, err = grpc.Dial(config.UserServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to dial userservice: %v", err)
-	}
-	s.userClient = pb.NewUserServiceClient(s.userConn)
-
-	s.trendConn, err = grpc.Dial(config.TrendServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to dial trendservice: %v", err)
-	}
-	s.trendClient = pb.NewTrendServiceClient(s.trendConn)
-
-	s.tweetConn, err = grpc.Dial(config.TweetServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to dial tweetservice: %v", err)
-	}
-	s.tweetClient = pb.NewTweetServiceClient(s.tweetConn)
-}
-
-// registers mux to local gatewayserver functions which forward to endpoints.
-func (s *Server) registerLocalEndpoints(ctx context.Context) {
-	// Register the AuthServiceServer
-	authServer := &AuthServiceServer{AuthClient: s.authClient}
-	pb.RegisterAuthServiceHandlerServer(ctx, s.mux, authServer)
-
-	// Register the UserServiceServer
-	userServer := &UserServiceServer{UserClient: s.userClient}
-	pb.RegisterUserServiceHandlerServer(ctx, s.mux, userServer)
-
-	// Register the TrendServiceServer
-	trendServer := &TrendServiceServer{TrendClient: s.trendClient}
-	pb.RegisterTrendServiceHandlerServer(ctx, s.mux, trendServer)
-
-	// Register the TweetServiceServer
-	tweetServer := &TweetServiceServer{TweetClient: s.tweetClient}
-	pb.RegisterTweetServiceHandlerServer(ctx, s.mux, tweetServer)
-}
-
-// registers mux to microservice endpoints
-func registerEndpoints(ctx context.Context, mux *runtime.ServeMux, config *ServiceConfig) {
-	err := pb.RegisterAuthServiceHandlerFromEndpoint(ctx, mux, config.AuthServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register AuthService handler: %v", err)
-	}
-	err = pb.RegisterUserServiceHandlerFromEndpoint(ctx, mux, config.UserServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register UserService handler: %v", err)
-	}
-	err = pb.RegisterTrendServiceHandlerFromEndpoint(ctx, mux, config.TrendServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register TrendService handler: %v", err)
-	}
-	err = pb.RegisterTweetServiceHandlerFromEndpoint(ctx, mux, config.TweetServiceAddr, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
-	if err != nil {
-		log.Fatalf("failed to register TweetService handler: %v", err)
-	}
-}
-
-func (s *Server) StartGRPCServer(wg *sync.WaitGroup) {
-	defer wg.Done()
-	s.grpcServer = grpc.NewServer()
-	pb.RegisterAuthServiceServer(s.grpcServer, &AuthServiceServer{AuthClient: s.authClient})
-	pb.RegisterUserServiceServer(s.grpcServer, &UserServiceServer{UserClient: s.userClient})
-	pb.RegisterTrendServiceServer(s.grpcServer, &TrendServiceServer{TrendClient: s.trendClient})
-	pb.RegisterTweetServiceServer(s.grpcServer, &TweetServiceServer{TweetClient: s.tweetClient})
-	reflection.Register(s.grpcServer)
-
+	reflection.Register(s)
 	listener, err := net.Listen("tcp", ":50055")
 	if err != nil {
 		log.Fatalf("Unable to listen on port :50055: %v", err)
 	}
 
-	var srvWg sync.WaitGroup
-	srvWg.Add(1)
-	log.Println("Starting gRPC server on port 50055...")
 	go func() {
-		if err := s.grpcServer.Serve(listener); err != nil {
-			log.Fatalf("Failed to serve gRPC: %v", err)
+		if err := s.Serve(listener); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
 		}
-		srvWg.Done()
 	}()
-	log.Println("gRPC server successfully started on port 50055...")
-
-	c := make(chan os.Signal, 1)
+	fmt.Println("Server succesfully started on port :50055")
+	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
-	<-c
 
-	log.Println("\nStopping the gRPC server...")
-	s.grpcServer.Stop()
+	// Block main routine until a signal is received
+	// As long as user doesn't press CTRL+C a message is not passed and our main routine keeps running
+	<-c
+	// After receiving CTRL+C Properly stop the server
+	fmt.Println("\nStopping the server...")
+	s.Stop()
 	listener.Close()
-	log.Println("gRPC successfully shutdown.")
-	srvWg.Wait()
+	fmt.Println("Done.")
+}
+
+func InitMux(wg *sync.WaitGroup, mux *runtime.ServeMux) {
+	defer wg.Done()
+	//handler := loggingMiddleware(mux)
+	err := http.ListenAndServe(":8080", mux)
+	if err != nil {
+		log.Fatalf("failed to start gateway server: %v", err)
+	}
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Failed to read request body: %v", err)
+		} else {
+			// Log the request body
+			log.Printf("Request body: %s", string(body))
+		}
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+		next.ServeHTTP(w, r)
+		//log.Printf("Sent response: %d", w.(http.ResponseWriter))
+	})
+}
+
+func registerUserDataService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux) {
+	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	userConn, err := grpc.Dial(config.Config.UserServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial userservice: %v", err)
+	}
+	tweetConn, err := grpc.Dial(config.Config.TweetServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial tweetservice: %v", err)
+	}
+	authClient := pb.NewAuthServiceClient(authConn)
+	userClient := pb.NewUserServiceClient(userConn)
+	tweetClient := pb.NewTweetServiceClient(tweetConn)
+	userDataServer := &UserDataServiceServer{
+		AuthClient:  authClient,
+		UserClient:  userClient,
+		TweetClient: tweetClient,
+	}
+	pb.RegisterUserDataServiceServer(s, userDataServer)
+	err = pb.RegisterUserDataServiceHandlerServer(ctx, mux, userDataServer)
+	if err != nil {
+		log.Fatalf("failed to register UserDataService handler: %v", err)
+	}
+}
+func registerAuthService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, AuthServiceAddr string) {
+	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	authClient := pb.NewAuthServiceClient(authConn)
+	authServer := &AuthServiceServer{AuthClient: authClient}
+	pb.RegisterAuthServiceServer(s, authServer)
+	err = pb.RegisterAuthServiceHandlerServer(ctx, mux, authServer)
+	if err != nil {
+		log.Fatalf("failed to register authservice handler: %v", err)
+	}
+}
+func registerUserService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, UserServiceAddr string) {
+	userConn, err := grpc.Dial(UserServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial userservice: %v", err)
+	}
+	userClient := pb.NewUserServiceClient(userConn)
+	userServer := &UserServiceServer{UserClient: userClient}
+	pb.RegisterUserServiceServer(s, userServer)
+	err = pb.RegisterUserServiceHandlerServer(ctx, mux, userServer)
+	if err != nil {
+		log.Fatalf("failed to register userservice handler: %v", err)
+	}
+}
+func registerTrendService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, TrendServiceAddr string) {
+	trendConn, err := grpc.Dial(TrendServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial trendservice: %v", err)
+	}
+	trendClient := pb.NewTrendServiceClient(trendConn)
+	trendServer := &TrendServiceServer{TrendClient: trendClient}
+	pb.RegisterTrendServiceServer(s, trendServer)
+	err = pb.RegisterTrendServiceHandlerServer(ctx, mux, trendServer)
+	if err != nil {
+		log.Fatalf("failed to register trendservice handler: %v", err)
+	}
+}
+func registerTweetService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux, TweetServiceAddr string) {
+	tweetConn, err := grpc.Dial(TweetServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial tweetservice: %v", err)
+	}
+	tweetClient := pb.NewTweetServiceClient(tweetConn)
+	tweetServer := &TweetServiceServer{TweetClient: tweetClient}
+	pb.RegisterTweetServiceServer(s, tweetServer)
+	err = pb.RegisterTweetServiceHandlerServer(ctx, mux, tweetServer)
+	if err != nil {
+		log.Fatalf("failed to register tweetservice handler: %v", err)
+	}
+}
+
+func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	// Pre-processing logic before invoking the RPC method
+	log.Println("Interceptor: Before invoking the RPC method")
+
+	excludedMethods := []string{
+		"/proto.AuthService/Register",
+		"/proto.AuthService/Login",
+		"/proto.AuthService/Validate",
+	}
+	log.Println(info.FullMethod)
+	for _, method := range excludedMethods {
+		if info.FullMethod == method {
+			return handler(ctx, req)
+		}
+	}
+
+	token, err := extractToken(ctx)
+	if err != nil || token.GetToken() == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid token")
+	}
+	validateReq := &pb.ValidateReq{Token: token.GetToken()}
+
+	AuthServiceAddr := config.Config.AuthServiceAddr
+	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	authClient := pb.NewAuthServiceClient(authConn)
+	server := &AuthServiceServer{AuthClient: authClient}
+	validateRes, err := server.AuthClient.Validate(ctx, validateReq)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "failed to validate token: %v", err)
+	}
+	log.Printf("Validation response: %v", validateRes)
+	log.Printf(validateReq.Token)
+
+	if info.FullMethod == "/proto.TweetService/PostTweet" {
+		tweetReq, ok := req.(*pb.PostTweetReq)
+		if !ok {
+			log.Println("Invalid request type for PostTweet")
+		}
+		tweetValue := tweetReq.GetTweet()
+		validatedTweet := &pb.Tweet{
+			UserID:   validateRes.GetUserid(),
+			Username: tweetValue.GetUsername(),
+			Body:     tweetValue.GetBody(),
+		}
+		req = &pb.PostTweetReq{Tweet: validatedTweet}
+	}
+
+	// Invoke the RPC method
+	resp, err := handler(ctx, req)
+	if err != nil {
+		log.Println(err)
+		return nil, status.Error(codes.Unknown, "Token validation failed")
+	}
+	return resp, err
+}
+
+func extractToken(ctx context.Context) (token *pb.ValidateReq, err error) {
+	log.Println("extracting token")
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "failed to extract metadata")
+	}
+	authHeaders, ok := md["authorization"]
+	if !ok || len(authHeaders) == 0 {
+		return nil, status.Errorf(codes.Unauthenticated, "missing authorization header")
+	}
+	tokenString := strings.TrimPrefix(authHeaders[0], "Bearer ")
+	if tokenString == authHeaders[0] {
+		return nil, status.Error(codes.Unauthenticated, "Invalid token format")
+	}
+	token = &pb.ValidateReq{Token: tokenString}
+	log.Println(tokenString)
+	return token, nil
 }

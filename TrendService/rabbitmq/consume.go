@@ -5,12 +5,16 @@ import (
 	. "github.com/Portfolio-Adv-Software/Kwetter/TrendService/trendserver"
 	"google.golang.org/protobuf/proto"
 	"log"
+	"os"
+	"os/signal"
 	"regexp"
 	"strings"
 	"sync"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+var rMQUrl = os.Getenv("RMQ_KEY")
 
 func failOnError(err error, msg string) {
 	if err != nil {
@@ -20,7 +24,7 @@ func failOnError(err error, msg string) {
 
 func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	conn, err := amqp.Dial("amqps://ctltdklj:qV9vx5HIf7JyfDDA0fRto3Disk-T57CF@goose.rmq2.cloudamqp.com/ctltdklj")
+	conn, err := amqp.Dial(rMQUrl)
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -49,7 +53,8 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	var forever chan struct{}
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
 
 	go func() {
 		for d := range msgs {
@@ -61,13 +66,13 @@ func ConsumeMessage(queue string, wg *sync.WaitGroup) {
 			}
 			tweet.Trend = extractHashtags(tweet.Body)
 			log.Printf("received tweet: %v", tweet)
-			c, _ := InitClient()
-			PostTrend(c, tweet)
+			client, _ := InitClient()
+			PostTrend(client, tweet)
 		}
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
-	<-forever
+	<-c
 }
 
 func extractHashtags(tweetBody string) []string {
