@@ -15,7 +15,6 @@ RUN go build -o /gateway ${TARGET_FILE}
 
 FROM golang:1.20-alpine
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /gateway /
 
 RUN adduser -D gateway-service

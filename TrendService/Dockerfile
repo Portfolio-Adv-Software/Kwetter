@@ -1,6 +1,6 @@
 FROM golang:1.20-alpine AS builder
 
-RUN apk update && apk add --no-cache git ca-certificates
+RUN apk update && apk add --no-cache git
 
 WORKDIR /app
 
@@ -13,17 +13,14 @@ ARG TARGET_FILE=main.go
 
 RUN go build -o /trend-service ${TARGET_FILE}
 
-FROM alpine
+FROM golang:1.20-alpine
 
 COPY .env /.env
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /trend-service /
 
 RUN adduser -D trend-service
 USER trend-service
 
-# Expose port
 EXPOSE 50052
 
-# Set the command to run the executable
 CMD ["/trend-service"]
