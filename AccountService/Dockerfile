@@ -7,7 +7,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY . /app
 
 ARG TARGET_FILE=main.go
 
@@ -18,6 +18,9 @@ FROM scratch
 COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /account-service /
+
+RUN adduser -D account-service
+USER account-service
 
 EXPOSE 50054
 

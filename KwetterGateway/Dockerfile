@@ -7,7 +7,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY . /app
 
 ARG TARGET_FILE=main.go
 
@@ -17,6 +17,9 @@ FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /gateway /
+
+RUN adduser -D gateway-service
+USER gateway-service
 
 EXPOSE 8080
 EXPOSE 50055

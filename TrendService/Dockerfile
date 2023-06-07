@@ -7,7 +7,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . .
+COPY . /app
 
 ARG TARGET_FILE=main.go
 
@@ -18,6 +18,9 @@ FROM scratch
 COPY .env /.env
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /trend-service /
+
+RUN adduser -D trend-service
+USER trend-service
 
 # Expose port
 EXPOSE 50052
