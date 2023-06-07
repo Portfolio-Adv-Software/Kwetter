@@ -4,6 +4,8 @@ on:
     branches: [ "main" ]
     paths:
       - AccountService/**
+  workflow_dispatch:
+
 jobs:
   account-service:
     environment: AccountService

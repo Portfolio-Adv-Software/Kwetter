@@ -4,6 +4,8 @@ on:
     branches: [ "main" ]
     paths:
       - TrendService/**
+  workflow_dispatch:
+
 jobs:
   trend-service:
     environment: TrendService

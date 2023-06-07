@@ -4,7 +4,8 @@ on:
     branches: [ "main" ]
     paths:
       - KwetterGateway/**
-      
+  workflow_dispatch:
+
 jobs:
   gateway-service:
     environment: KwetterGateway
