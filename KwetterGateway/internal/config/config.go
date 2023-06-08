@@ -10,7 +10,7 @@ type ServiceConfig struct {
 var Config ServiceConfig
 
 func SetConfig() {
-	Config.AuthServiceAddr = "auth-service.default:50053"
+	Config.AuthServiceAddr = ":50053"
 	Config.UserServiceAddr = "account-service.default:50054"
 	Config.TrendServiceAddr = "trend-service.default:50052"
 	Config.TweetServiceAddr = "tweet-service.default:50051"

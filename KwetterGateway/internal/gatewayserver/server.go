@@ -61,7 +61,22 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
-	return a.AuthClient.Register(ctx, req)
+	log.Println("Received Register request")
+	// You can add more log statements to display the request details if needed
+	log.Printf("Register request: %+v", req)
+
+	// Delegate the request to the underlying AuthClient
+	res, err := a.AuthClient.Register(ctx, req)
+
+	if err != nil {
+		log.Printf("Register error: %v", err)
+	} else {
+		log.Println("Register response:")
+		// You can add more log statements to display the response details if needed
+		log.Printf("%+v", res)
+	}
+
+	return res, err
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
