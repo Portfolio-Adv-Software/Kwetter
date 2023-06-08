@@ -130,14 +130,23 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	var opts []grpc.ServerOption
 	opts = append(opts, grpc.UnaryInterceptor(authInterceptor))
 	s := grpc.NewServer(opts...)
-	ctx := context.Background()
-	registerUserDataService(s, ctx, mux)
-	registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
-	registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
-	registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
-	registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
+	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	authClient := __.NewAuthServiceClient(authConn)
+	srv := &AuthServiceServer{AuthClient: authClient}
+	__.RegisterAuthServiceServer(s, srv)
 
+	//ctx := context.Background()
+	//registerAuthService(s, ctx, config.Config.AuthServiceAddr)
+	//registerUserDataService(s, ctx, mux)
+	//registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
+	//registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
+	//registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
+	//registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
 	reflection.Register(s)
+
 	listener, err := net.Listen("tcp", ":50055")
 	if err != nil {
 		log.Fatalf("Unable to listen on port :50055: %v", err)
