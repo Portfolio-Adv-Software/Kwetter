@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: evers419/kwetter-gateway-service:latest
+          image: evers419/kwetter:gateway-service-latest
           ports:
             - containerPort: 8080
             - containerPort: 50055
@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: accountservice
-          image: evers419/kwetter-account-service:latest
+          image: evers419/kwetter:account-service-latest
           ports:
             - containerPort: 50054
 
@@ -59,7 +59,7 @@ spec:
     spec:
       containers:
         - name: authservice
-          image: evers419/kwetter-auth-service:latest
+          image: evers419/kwetter:auth-service-latest
           ports:
             - containerPort: 50053
 
@@ -81,7 +81,7 @@ spec:
     spec:
       containers:
         - name: trendservice
-          image: evers419/kwetter-trend-service:latest
+          image: evers419/kwetter:trend-service-latest
           ports:
             - containerPort: 50052
 
@@ -103,6 +103,6 @@ spec:
     spec:
       containers:
         - name: tweetservice
-          image: evers419/kwetter-tweet-service:latest
+          image: evers419/kwetter:tweet-service-latest
           ports:
             - containerPort: 50051

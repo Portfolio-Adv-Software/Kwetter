@@ -10,8 +10,8 @@ type ServiceConfig struct {
 var Config ServiceConfig
 
 func SetConfig() {
-	Config.AuthServiceAddr = "localhost:50053"
-	Config.UserServiceAddr = "localhost:50054"
-	Config.TrendServiceAddr = "localhost:50052"
-	Config.TweetServiceAddr = "localhost:50051"
+	Config.AuthServiceAddr = ":50053"
+	Config.UserServiceAddr = ":50054"
+	Config.TrendServiceAddr = ":50052"
+	Config.TweetServiceAddr = ":50051"
 }
