@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: TrendService
+  template:
+    metadata:
+      labels:
+        app: TrendService
+    spec:
+      containers:
+        - name: TrendService
+          image: evers419/kwetter-trend-service:latest
+          ports:
+            - containerPort: 50052

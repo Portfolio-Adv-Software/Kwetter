@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tweetservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: TweetService
+  template:
+    metadata:
+      labels:
+        app: TweetService
+    spec:
+      containers:
+        - name: TweetService
+          image: evers419/kwetter-tweet-service:latest
+          ports:
+            - containerPort: 50051
