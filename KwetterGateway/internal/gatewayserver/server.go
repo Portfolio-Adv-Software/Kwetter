@@ -294,6 +294,9 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 			log.Println("Invalid request type for PostTweet")
 		}
 		tweetValue := tweetReq.GetTweet()
+		if tweetValue.GetUserID() != validateRes.GetUserid() {
+			return nil, status.Errorf(codes.Unauthenticated, "UserID mismatch")
+		}
 		validatedTweet := &__.Tweet{
 			UserID:   validateRes.GetUserid(),
 			Username: tweetValue.GetUsername(),
