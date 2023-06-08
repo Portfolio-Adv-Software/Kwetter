@@ -88,7 +88,7 @@ message LoginReq{string email = 1; string password = 2;}
 message LoginRes{string status = 1; string access_token = 2;}
 
 //Validate
-message ValidateReq{string token = 1;}
+message ValidateReq{string token = 1; string userid = 2;}
 message ValidateRes{string status = 1; string userid = 2;}
 
 //GetData

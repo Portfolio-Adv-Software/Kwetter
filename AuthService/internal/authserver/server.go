@@ -163,11 +163,18 @@ func (a AuthServiceServer) Validate(ctx context.Context, req *__.ValidateReq) (*
 		Email string `bson:"email"`
 	}
 	user := &User{}
-	emailClaim := token.Claims.(jwt.MapClaims)
-	email := emailClaim["email"].(string)
+	claims := token.Claims.(jwt.MapClaims)
+	email := claims["email"].(string)
+	userID := claims["id"].(string)
 	err = authdb.FindOne(ctx, bson.M{"email": email}).Decode(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user: %v", err)
+	}
+	if user.Id != userID {
+		return &__.ValidateRes{Status: "INVALID"}, nil
+	}
+	if user.Id != req.GetUserid() {
+		return &__.ValidateRes{Status: "INVALID"}, nil
 	}
 	// Token is valid
 	return &__.ValidateRes{
