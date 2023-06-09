@@ -83,6 +83,8 @@ func (a AuthServiceServer) DeleteData(ctx context.Context, req *__.DeleteDataReq
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
+	log.Println("Received Register request")
+	log.Printf("Register request: email:%q password:%q dataPermission:%v", req.GetEmail(), req.GetPassword(), req.GetDataPermission())
 	if !req.DataPermission {
 		return nil, status.Error(codes.Aborted, "No permission to store data")
 	}

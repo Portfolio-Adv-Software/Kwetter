@@ -61,7 +61,22 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
-	return a.AuthClient.Register(ctx, req)
+	log.Println("Received Register request")
+	// You can add more log statements to display the request details if needed
+	log.Printf("Register request: %+v", req)
+
+	// Delegate the request to the underlying AuthClient
+	res, err := a.AuthClient.Register(ctx, req)
+
+	if err != nil {
+		log.Printf("Register error: %v", err)
+	} else {
+		log.Println("Register response:")
+		// You can add more log statements to display the response details if needed
+		log.Printf("%+v", res)
+	}
+
+	return res, err
 }
 
 func (a AuthServiceServer) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
@@ -115,14 +130,23 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	var opts []grpc.ServerOption
 	opts = append(opts, grpc.UnaryInterceptor(authInterceptor))
 	s := grpc.NewServer(opts...)
-	ctx := context.Background()
-	registerUserDataService(s, ctx, mux)
-	registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
-	registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
-	registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
-	registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
+	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("failed to dial authservice: %v", err)
+	}
+	authClient := __.NewAuthServiceClient(authConn)
+	srv := &AuthServiceServer{AuthClient: authClient}
+	__.RegisterAuthServiceServer(s, srv)
 
+	//ctx := context.Background()
+	//registerAuthService(s, ctx, config.Config.AuthServiceAddr)
+	//registerUserDataService(s, ctx, mux)
+	//registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
+	//registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
+	//registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
+	//registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
 	reflection.Register(s)
+
 	listener, err := net.Listen("tcp", ":50055")
 	if err != nil {
 		log.Fatalf("Unable to listen on port :50055: %v", err)
