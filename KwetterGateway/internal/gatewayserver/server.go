@@ -198,6 +198,7 @@ func registerUserDataService(s *grpc.Server, ctx context.Context, mux *runtime.S
 		UserClient:  userClient,
 		TweetClient: tweetClient,
 	}
+
 	__.RegisterUserDataServiceServer(s, userDataServer)
 	err = __.RegisterUserDataServiceHandlerServer(ctx, mux, userDataServer)
 	if err != nil {

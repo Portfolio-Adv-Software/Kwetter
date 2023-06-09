@@ -16,7 +16,7 @@ func main() {
 	config.SetConfig()
 	go func() {
 		defer wg.Done()
-		gatewayserver.InitGRPC(&wg, nil) //add mux
+		gatewayserver.InitGRPC(&wg, mux) //add mux
 	}()
 
 	go func() {
