@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: gateway-service
+  name: gatewayservice
 spec:
   selector:
     app: gateway
@@ -21,10 +21,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: account-service
+  name: accountservice
 spec:
   selector:
-    app: account-service
+    app: accountservice
   ports:
     - protocol: TCP
       port: 50054
@@ -35,10 +35,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-service
+  name: authservice
 spec:
   selector:
-    app: auth-service
+    app: authservice
   ports:
     - protocol: TCP
       port: 50053
@@ -49,10 +49,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: trend-service
+  name: trendservice
 spec:
   selector:
-    app: trend-service
+    app: trendservice
   ports:
     - protocol: TCP
       port: 50052
@@ -63,10 +63,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tweet-service
+  name: tweetservice
 spec:
   selector:
-    app: tweet-service
+    app: tweetservice
   ports:
     - protocol: TCP
       port: 50051
