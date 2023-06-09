@@ -19,6 +19,9 @@ spec:
           ports:
             - containerPort: 8080
             - containerPort: 50055
+          resources:
+            limits:
+              cpu: 100m
 
 ---
 

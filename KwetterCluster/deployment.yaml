@@ -18,6 +18,9 @@ spec:
           ports:
             - containerPort: 8080
             - containerPort: 50055
+          resources:
+            limits:
+              cpu: 100m
 
 ---
 
@@ -40,6 +43,9 @@ spec:
           image: evers419/kwetter:account-service-latest
           ports:
             - containerPort: 50054
+          resources:
+            limits:
+              cpu: 100m
 
 ---
 
@@ -62,6 +68,9 @@ spec:
           image: evers419/kwetter:auth-service-latest
           ports:
             - containerPort: 50053
+          resources:
+            limits:
+              cpu: 100m
 
 ---
 
@@ -84,6 +93,9 @@ spec:
           image: evers419/kwetter:trend-service-latest
           ports:
             - containerPort: 50052
+          resources:
+            limits:
+              cpu: 100m
 
 ---
 
@@ -106,3 +118,6 @@ spec:
           image: evers419/kwetter:tweet-service-latest
           ports:
             - containerPort: 50051
+          resources:
+            limits:
+              cpu: 100m
