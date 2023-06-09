@@ -61,6 +61,7 @@ type AuthServiceServer struct {
 }
 
 func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*__.RegisterRes, error) {
+	return a.AuthClient.Register(ctx, req)
 	log.Println("Received Register request")
 	// You can add more log statements to display the request details if needed
 	log.Printf("Register request: %+v", req)
@@ -82,7 +83,6 @@ func (a AuthServiceServer) Register(ctx context.Context, req *__.RegisterReq) (*
 func (a AuthServiceServer) Login(ctx context.Context, req *__.LoginReq) (*__.LoginRes, error) {
 	return a.AuthClient.Login(ctx, req)
 }
-
 func (a AuthServiceServer) Validate(ctx context.Context, req *__.ValidateReq) (*__.ValidateRes, error) {
 	return a.AuthClient.Validate(ctx, req)
 }
@@ -95,7 +95,6 @@ type UserServiceServer struct {
 func (u UserServiceServer) UpdateUser(ctx context.Context, req *__.UpdateUserReq) (*__.UpdateUserRes, error) {
 	return u.UserClient.UpdateUser(ctx, req)
 }
-
 func (u UserServiceServer) DeleteUser(ctx context.Context, req *__.DeleteUserReq) (*__.DeleteUserRes, error) {
 	return u.UserClient.DeleteUser(ctx, req)
 }
@@ -117,41 +116,27 @@ type TweetServiceServer struct {
 func (t TweetServiceServer) ReturnTweet(ctx context.Context, req *__.ReturnTweetReq) (*__.ReturnTweetRes, error) {
 	return t.TweetClient.ReturnTweet(ctx, req)
 }
-
 func (t TweetServiceServer) PostTweet(ctx context.Context, req *__.PostTweetReq) (*__.PostTweetRes, error) {
 	return t.TweetClient.PostTweet(ctx, req)
 }
-
 func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	defer wg.Done()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	fmt.Println("Starting server on port: 50055")
-
 	var opts []grpc.ServerOption
 	opts = append(opts, grpc.UnaryInterceptor(authInterceptor))
 	s := grpc.NewServer(opts...)
-	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to dial authservice: %v", err)
-	}
-	authClient := __.NewAuthServiceClient(authConn)
-	srv := &AuthServiceServer{AuthClient: authClient}
-	__.RegisterAuthServiceServer(s, srv)
-
-	//ctx := context.Background()
-	//registerAuthService(s, ctx, config.Config.AuthServiceAddr)
-	//registerUserDataService(s, ctx, mux)
-	//registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
-	//registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
-	//registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
-	//registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
+	ctx := context.Background()
+	registerUserDataService(s, ctx, mux)
+	registerAuthService(s, ctx, mux, config.Config.AuthServiceAddr)
+	registerUserService(s, ctx, mux, config.Config.UserServiceAddr)
+	registerTrendService(s, ctx, mux, config.Config.TrendServiceAddr)
+	registerTweetService(s, ctx, mux, config.Config.TweetServiceAddr)
 	reflection.Register(s)
-
 	listener, err := net.Listen("tcp", ":50055")
 	if err != nil {
 		log.Fatalf("Unable to listen on port :50055: %v", err)
 	}
-
 	go func() {
 		if err := s.Serve(listener); err != nil {
 			log.Fatalf("Failed to serve: %v", err)
@@ -160,7 +145,6 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	fmt.Println("Server succesfully started on port :50055")
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt)
-
 	// Block main routine until a signal is received
 	// As long as user doesn't press CTRL+C a message is not passed and our main routine keeps running
 	<-c
@@ -170,7 +154,6 @@ func InitGRPC(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	listener.Close()
 	fmt.Println("Done.")
 }
-
 func InitMux(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 	defer wg.Done()
 	//handler := loggingMiddleware(mux)
@@ -179,7 +162,6 @@ func InitMux(wg *sync.WaitGroup, mux *runtime.ServeMux) {
 		log.Fatalf("failed to start gateway server: %v", err)
 	}
 }
-
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Received request: %s %s", r.Method, r.URL.Path)
@@ -195,7 +177,6 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		//log.Printf("Sent response: %d", w.(http.ResponseWriter))
 	})
 }
-
 func registerUserDataService(s *grpc.Server, ctx context.Context, mux *runtime.ServeMux) {
 	authConn, err := grpc.Dial(config.Config.AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -275,11 +256,9 @@ func registerTweetService(s *grpc.Server, ctx context.Context, mux *runtime.Serv
 		log.Fatalf("failed to register tweetservice handler: %v", err)
 	}
 }
-
 func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	// Pre-processing logic before invoking the RPC method
 	log.Println("Interceptor: Before invoking the RPC method")
-
 	excludedMethods := []string{
 		"/proto.AuthService/Register",
 		"/proto.AuthService/Login",
@@ -291,13 +270,11 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 			return handler(ctx, req)
 		}
 	}
-
 	token, err := extractToken(ctx)
 	if err != nil || token.GetToken() == "" {
 		return nil, err
 	}
 	validateReq := &__.ValidateReq{Token: token.GetToken()}
-
 	AuthServiceAddr := config.Config.AuthServiceAddr
 	authConn, err := grpc.Dial(AuthServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -311,7 +288,6 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	}
 	log.Printf("Validation response: %v", validateRes)
 	log.Printf(validateReq.Token)
-
 	if info.FullMethod == "/proto.TweetService/PostTweet" {
 		tweetReq, ok := req.(*__.PostTweetReq)
 		if !ok {
@@ -328,7 +304,6 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 		}
 		req = &__.PostTweetReq{Tweet: validatedTweet}
 	}
-
 	// Invoke the RPC method
 	resp, err := handler(ctx, req)
 	if err != nil {
@@ -337,7 +312,6 @@ func authInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 	}
 	return resp, err
 }
-
 func extractToken(ctx context.Context) (token *__.ValidateReq, err error) {
 	log.Println("extracting token")
 	md, ok := metadata.FromIncomingContext(ctx)
