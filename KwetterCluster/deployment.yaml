@@ -27,31 +27,6 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: accountservice-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: accountservice
-  template:
-    metadata:
-      labels:
-        app: accountservice
-    spec:
-      containers:
-        - name: accountservice
-          image: evers419/kwetter:account-service-latest
-          ports:
-            - containerPort: 50054
-          resources:
-            limits:
-              cpu: "100m"
-
----
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
   name: authservice-deployment
 spec:
   replicas: 1
@@ -68,6 +43,31 @@ spec:
           image: evers419/kwetter:auth-service-latest
           ports:
             - containerPort: 50053
+          resources:
+            limits:
+              cpu: "100m"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: accountservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: accountservice
+  template:
+    metadata:
+      labels:
+        app: accountservice
+    spec:
+      containers:
+        - name: accountservice
+          image: evers419/kwetter:account-service-latest
+          ports:
+            - containerPort: 50054
           resources:
             limits:
               cpu: "100m"
