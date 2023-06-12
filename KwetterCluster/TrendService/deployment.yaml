@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trendservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trendservice
+  template:
+    metadata:
+      labels:
+        app: trendservice
+    spec:
+      containers:
+        - name: trendservice
+          image: evers419/kwetter:trend-service-latest
+          ports:
+            - containerPort: 50052
+          resources:
+            limits:
+              cpu: "100m"

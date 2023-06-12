@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tweetservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tweetservice
+  template:
+    metadata:
+      labels:
+        app: tweetservice
+    spec:
+      containers:
+        - name: tweetservice
+          image: evers419/kwetter:tweet-service-latest
+          ports:
+            - containerPort: 50051
+          resources:
+            limits:
+              cpu: "100m"

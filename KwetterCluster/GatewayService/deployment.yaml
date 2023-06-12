@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gatewayservice-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: evers419/kwetter:gateway-service-latest
+          ports:
+            - containerPort: 8080
+            - containerPort: 50055
+          resources:
+            limits:
+              cpu: "100m"
