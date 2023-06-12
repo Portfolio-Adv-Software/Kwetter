@@ -49,4 +49,4 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           az aks get-credentials --resource-group Kwetter --name KwetterCluster
           kubectl delete deployment trendservice-deployment
-          kubectl apply -f https://github.com/Portfolio-Adv-Software/Kwetter/blob/main/KwetterCluster/deployment.yaml
+          kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/KwetterCluster/TrendService/deployment.yaml
