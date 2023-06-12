@@ -53,4 +53,4 @@ jobs:
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           az aks get-credentials --resource-group Kwetter --name KwetterCluster
           kubectl delete deployment tweetservice-deployment
-          kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/KwetterCluster/TweetService/deployment.yaml
+          kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/TweetService/deployment.yaml
