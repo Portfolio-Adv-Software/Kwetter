@@ -49,5 +49,5 @@ jobs:
       - run: |
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           az aks get-credentials --resource-group Kwetter --name KwetterCluster
-          kubectl delete deployment gatewayservice-deployment
+          kubectl delete deployment gatewayservice-deployment --ignore-not-found
           kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/KwetterGateway/deployment.yaml
