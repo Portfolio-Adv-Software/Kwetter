@@ -46,3 +46,12 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/kwetter:auth-service-latest
   
+      - name: Deploy to Cloud
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - run: |
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          az aks get-credentials --resource-group Kwetter --name KwetterCluster
+          kubectl delete deployment authservice-deployment
+          kubectl apply -f https://github.com/Portfolio-Adv-Software/Kwetter/blob/main/KwetterCluster/deployment.yaml
