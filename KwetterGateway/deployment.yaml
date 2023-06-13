@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: gatewayservice-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: gateway
@@ -22,3 +22,6 @@ spec:
             limits:
               cpu: 100m
               memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
