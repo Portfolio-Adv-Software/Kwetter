@@ -54,5 +54,7 @@ jobs:
           az aks get-credentials --resource-group Kwetter --name KwetterCluster
           kubectl delete deployment accountservice-deployment --ignore-not-found
           kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/AccountService/deployment.yaml
+          kubectl apply -f https://raw.githubusercontent.com/Portfolio-Adv-Software/Kwetter/main/AccountService/scaling.yaml
+  
           
           
